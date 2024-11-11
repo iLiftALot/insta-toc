@@ -1,0 +1,9 @@
+{
+	"id": "template-plugin",
+	"name": "Template Plugin",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Template for creating plugins for the Obsidian API.",
+	"author": "Obsidian",
+	"isDesktopOnly": false
+}
