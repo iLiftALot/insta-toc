@@ -1,9 +1,11 @@
 export interface AutoTocSettings {
-    mySetting: string;
+    tocString: string;
+    shouldGenToc: boolean;
 }
 
 export const DEFAULT_SETTINGS: AutoTocSettings = {
-    mySetting: 'default'
+    tocString: `> [!SUMMARY] Table of Contents`,
+    shouldGenToc: false
 }
 
 
