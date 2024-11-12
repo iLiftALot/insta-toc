@@ -5,6 +5,7 @@ import {
 	EventRef,
 	MarkdownFileInfo,
 	MarkdownPostProcessorContext,
+	MarkdownRenderer,
 	MarkdownView,
 	Plugin,
 	PluginManifest,
@@ -50,15 +51,30 @@ export default class AutoToc extends Plugin {
 		// Step 1: Create a custom codeblock processor for the table of contents
 		this.registerMarkdownCodeBlockProcessor(
 			"insta-toc",
-			(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void => {
-				const pathWithFileExtension: string = ctx.sourcePath; 
+			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> => {
+				const pathWithFileExtension: string = ctx.sourcePath;
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 
-				// Create the container for the table of contents
-				const tocContainer: HTMLDivElement = this.createListLink(source, filePath, document.createElement('div'));
-				tocContainer.classList.add('insta-toc-container');
+				const lines = source.split('\n');
+				const processedLines = lines.map((line) => {
+					if (!line.trim()) return line;
 
-				el.appendChild(tocContainer);
+					// Match leading spaces or tabs and the content
+					const match = line.match(/^(\s*)(-)\s*(.*)/);
+					if (!match) return line;
+
+					const indent = match[1];
+					const bullet = match[2];
+					const contentText = match[3];
+					const navLink = `${filePath}#${contentText}`;
+
+					return `${indent}${bullet} [[${navLink}|${contentText}]]`;
+				});
+
+				const processedSource = processedLines.join('\n');
+
+				// Now render the markdown
+				await MarkdownRenderer.render(this.app, processedSource, el, ctx.sourcePath, this);
 			}
 		);
 
@@ -150,58 +166,6 @@ export default class AutoToc extends Plugin {
 		}
 		
 		return insertPosition;
-	}
-
-	// Generate HTML link/list item -> append to main TOC container
-	private createListLink(content: string, filePath: string, tocContainer: HTMLDivElement): HTMLDivElement {
-		const lines: string[] = content.split('\n');
-
-		// Create list element and set indent level
-		const createListItem = (level: number): HTMLLIElement => {
-			const li: HTMLLIElement = document.createElement('li');
-			li.style.marginLeft = `${level * 20}px`; // Indent based on heading level
-
-			return li;
-		}
-
-		// Create link element with Obsidian link properties
-		const createLink = (filePath: string, headingText: string): HTMLAnchorElement => {
-			const a: HTMLAnchorElement = document.createElement('a');
-			const navLink = `${filePath}#${headingText}`; // Ensures navigation to heading on click
-			const ariaLabel = `${filePath} > ${headingText}`;
-
-			a.innerHTML = headingText; // Set inner HTML to header text excluding all "#"
-			a.setAttrs({
-				"href": navLink,
-				"data-href": navLink,
-				"aria-label": ariaLabel,
-				"text": headingText,
-				"class": "internal-link",
-				"target": "_blank",
-				"ref": "noopener nofollow",
-				"data-tooltip-position": "top"
-			});
-
-			return a;
-		}
-
-		// Iterate over each line to create list items and append to listItem then tocContainer
-		lines.forEach((line: string): void => {
-			const match: RegExpMatchArray | null = line.match(/^(\s*)- (.+)$/);
-			if (match) {
-				const indent: number = match[1].length; // Amount of '#'
-				const level: number = indent / 4; 		// 4 spaces per indent level
-				const headingText: string = match[2]; 	// Text within heading excluding all '#'
-
-				const link: HTMLAnchorElement = createLink(filePath, headingText); // Generate HTML link
-				const listItem: HTMLLIElement = createListItem(level); // Generate HTML list item
-
-				listItem.appendChild(link); 			// Append HTML link to the list item
-				tocContainer.appendChild(listItem);		// Append HTML list item to main toc container
-			}
-		});
-
-		return tocContainer;
 	}
 
 	// Load known headers from JSON storage
