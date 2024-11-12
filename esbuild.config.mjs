@@ -121,6 +121,10 @@ const context = await esbuild.context({
 		"@lezer/highlight",
 		"@lezer/lr",
 		...builtins],
+	define: {
+		"Process.env": JSON.stringify(parsedEnv),
+	},
+	platform: "node",
 	format: "cjs",
 	target: "es2021",
 	logLevel: "info",

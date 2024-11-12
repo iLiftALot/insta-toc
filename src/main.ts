@@ -20,7 +20,7 @@ import { MetadataEditor, PropertyEntryData } from 'obsidian-typings';
 
 export default class AutoToc extends Plugin {
 	public static app: App;
-	//public static get vault_name() { return Process.env.vaultName }
+	public static get vault_name() { return Process.env.vaultName }
 	//public static settingsConfigPath = `${Process.env.pluginRoot.replace(
 	//	new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
 	//	''
@@ -40,21 +40,21 @@ export default class AutoToc extends Plugin {
 	}
 
 	async onload() {
-		console.log('Loading Auto Toc Plugin');
+		console.log('Loading Insta TOC Plugin');
 
 		await this.loadSettings();
 		this.addSettingTab(new SettingTab(this.app, this));
 
 		// Step 1: Create a custom codeblock processor for the table of contents
 		this.registerMarkdownCodeBlockProcessor(
-			"auto-toc",
+			"insta-toc",
 			(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void => {
 				const pathWithFileExtension: string = ctx.sourcePath; 
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 
 				// Create the container for the table of contents
 				const tocContainer: HTMLDivElement = this.createListLink(source, filePath, document.createElement('div'));
-				tocContainer.classList.add('auto-toc-container');
+				tocContainer.classList.add('insta-toc-container');
 
 				el.appendChild(tocContainer);
 			}
@@ -101,7 +101,7 @@ export default class AutoToc extends Plugin {
 	}
 
 	onunload() {
-		console.log('Unloading Auto Toc Plugin');
+		console.log('Unloading Insta TOC Plugin');
 	}
 
 	async loadSettings() {
@@ -125,7 +125,7 @@ export default class AutoToc extends Plugin {
 		this.knownHeaders.forEach((headers: string[], filePath: string) => {
 			headersObject[filePath] = Array.from(headers);
 		});
-		await this.app.vault.adapter.write('.obsidian/plugins/auto-toc/src/headers.json', JSON.stringify(headersObject, null, 2));
+		await this.app.vault.adapter.write('.obsidian/plugins/insta-toc/src/headers.json', JSON.stringify(headersObject, null, 2));
 	}
 
 	// Check for file properties and adjust insertion position accordingly
@@ -222,7 +222,7 @@ export default class AutoToc extends Plugin {
 	// Dynamically update the TOC
 	private updateAutoToc(editor: Editor, filePath: string): void {
 		const activeEditor: MarkdownFileInfo | null = this.app.workspace.activeEditor;
-		const tocRegex: RegExp = /^```auto-toc\n([\s\S]*?)\n```/gm;
+		const tocRegex: RegExp = /^```insta-toc\n([\s\S]*?)\n```/gm;
 		const fileContents: string = editor.getValue();
 		const fileHeadings: RegExpExecArray | null = tocRegex.exec(fileContents);
 
@@ -249,7 +249,7 @@ export default class AutoToc extends Plugin {
 				.join('\n');
 
 			// Replace the old TOC with the new content
-			const newTocBlock = `\`\`\`auto-toc\n${tocContent}\n\`\`\``;
+			const newTocBlock = `\`\`\`insta-toc\n${tocContent}\n\`\`\``;
 			editor.replaceRange(newTocBlock, tocStartPos, tocEndPos);
 		
 		} else if (activeEditor) { // File doesn't have headings present
@@ -269,7 +269,7 @@ export default class AutoToc extends Plugin {
 				.join('\n');
 
 			// Format and insert TOC at the determined position with new content
-			const newTocBlock = `\`\`\`auto-toc\n${tocContent}\n\`\`\`\n\n`;
+			const newTocBlock = `\`\`\`insta-toc\n${tocContent}\n\`\`\`\n\n`;
 			editor.replaceRange(newTocBlock, insertPos);
 		}
 	}
@@ -296,7 +296,7 @@ export default class AutoToc extends Plugin {
 			// Save updated headers to the JSON file
 			await this.saveKnownHeaders();
 
-			// Dynamically update the auto-toc codeblock
+			// Dynamically update the insta-toc codeblock
 			this.updateAutoToc(editor, filePath);
 		}
 	}

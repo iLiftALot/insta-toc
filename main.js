@@ -1,1 +1,1 @@
-/Users/nicholascorbin/Desktop/Knowledge/MyObsidian/ObsidianBackup/My Sync/.obsidian/plugins/auto-toc/dist/dev/main.js
+/Users/nicholascorbin/Desktop/Knowledge/MyObsidian/ObsidianBackup/My Sync/.obsidian/plugins/insta-toc/dist/dev/main.js
