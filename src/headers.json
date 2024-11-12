@@ -10,10 +10,27 @@
     "Hello"
   ],
   "Untitled.md": [
-    "Hello there",
-    "How are yo",
-    "How are you",
-    "Whats up",
-    "Heyy"
+    "# Hiii"
+  ],
+  "My Home.md": [
+    "## File Views",
+    "### By Recent",
+    "### By Creation Date",
+    "## Areas",
+    "## Sub Areas",
+    "## Resources",
+    "## Projects",
+    "## Web-Clips",
+    "## Templates",
+    "## Notes",
+    "### All Notes Sorted by Favorites",
+    "### Favorite Notes",
+    "### Favorite Web-Clips",
+    "## Missing Metadata",
+    "## Schedule",
+    "### Today",
+    "### Tomorrow",
+    "### This Week",
+    "### This Month"
   ]
 }

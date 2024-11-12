@@ -14,6 +14,7 @@ import { SettingTab } from './settings/SettingsTab';
 import { deepmerge } from 'deepmerge-ts';
 import * as knownHeadersJson from './headers.json';
 import { debounce } from './utils/debounce';
+import { contextId } from 'process';
 
 
 export default class AutoToc extends Plugin {
@@ -59,34 +60,13 @@ export default class AutoToc extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(
 			"auto-toc",
 			(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-				// Split the source into lines
-				const lines = source.split('\n');
+				const pathWithFileExtension = ctx.sourcePath;
+				const filePath = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 
 				// Create a container for the table of contents
-				const tocContainer = document.createElement('div');
+				const tocContainer = this.createListLink(source, filePath, document.createElement('div'));
 				tocContainer.classList.add('auto-toc-container');
 
-				// Function to create a list item
-				const createListItem = (text: string, level: number) => {
-					const li = document.createElement('li');
-					li.textContent = text;
-					li.style.marginLeft = `${level * 20}px`; // Indent based on heading level
-					return li;
-				}
-
-				// Iterate over each line and create list items
-				lines.forEach(line => {
-					const match = line.match(/^(\s*)- (.+)$/);
-					if (match) {
-						const indent = match[1].length;
-						const text = match[2];
-						const level = indent / 4; // Assuming 4 spaces per indent level
-						const listItem = createListItem(text, level);
-						tocContainer.appendChild(listItem);
-					}
-				})
-
-				// Append the container to the element
 				el.appendChild(tocContainer);
 			}
 		)
@@ -113,7 +93,7 @@ export default class AutoToc extends Plugin {
 					let match;
 
 					while ((match = headerRegex.exec(fileContents)) !== null) {
-						headers.add(match[1]);
+						headers.add(`${match[1]} ${match[2]}`); // Store full heading including '#' symbols
 					}
 
 					// Step 3: Update known headers storage
@@ -185,6 +165,56 @@ export default class AutoToc extends Plugin {
 		await this.app.vault.adapter.write('.obsidian/plugins/auto-toc/src/headers.json', JSON.stringify(headersObject, null, 2));
 	}
 
+	private createListLink(content: string, filePath: string, tocContainer: HTMLDivElement): HTMLDivElement {
+		const lines = content.split('\n');
+
+		// Create list element
+		const createListItem = (text: string, level: number) => {
+			const li = document.createElement('li');
+			li.textContent = text;
+			li.style.marginLeft = `${level * 20}px`; // Indent based on heading level
+			return li;
+		}
+
+		// Create link element
+		const createLink = (filePath: string, headingText: string) => {
+			const a = document.createElement('a');
+			const navLink = `${filePath}#${headingText}`;
+			const ariaLabel = `${filePath} > ${headingText}`;
+
+			a.innerHTML = headingText;
+			a.setAttrs({
+				"href": navLink,
+				"data-href": navLink,
+				"aria-label": ariaLabel,
+				"text": headingText,
+				"class": "internal-link",
+				"target": "_blank",
+				"ref": "noopener nofollow",
+				"data-tooltip-position": "top"
+			});
+
+			return a;
+		}
+
+		// Iterate over each line and create list items
+		lines.forEach((line: string): void => {
+			const match = line.match(/^(\s*)- (.+)$/);
+			if (match) {
+				const indent = match[1].length;
+				const text = match[2];
+				const link = createLink(filePath, text);
+				const level = indent / 4; // Assuming 4 spaces per indent level
+				const listItem = createListItem(text, level);
+
+				listItem.appendChild(link);
+				tocContainer.appendChild(listItem);
+			}
+		});
+
+		return tocContainer;
+	}
+
 	// Load known headers from JSON
 	private initKnownHeaders(): void {
 		const headers = this.headersObject;
@@ -217,7 +247,6 @@ export default class AutoToc extends Plugin {
 					const levelMatch = header.match(/^(#+)\s+/);
 					const level = levelMatch ? levelMatch[1].length : 1;
 					const text = header.replace(/^#+\s+/, '');
-					console.log(level);
 					return `${' '.repeat((level - 1) * 4)}- ${text}`;
 				})
 				.join('\n');
@@ -252,29 +281,40 @@ export default class AutoToc extends Plugin {
 		const file = info.file;
 
 		if (editor && file && info instanceof MarkdownView) {
-			const currentLineNumber = editor.getCursor("head").line;
-			const currentLineText = editor.getLine(currentLineNumber);
+			const fileContents = editor.getValue();
 
-			// Check if the user is typing a heading
-			const headingMatch = currentLineText.match(/^(#+)\s+(.+)$/);
-			if (headingMatch) {
-				const level = headingMatch[1].length;
-				const headingText = headingMatch[2];
+			// Extract all headings from the file
+			const headers = new Set<string>();
+			const headerRegex = /^(#+)\s+(.+)$/gm;
+			let match: RegExpExecArray | null;
 
-				// Update the known headers storage
-				const filePath = file.path;
-				const existingHeaders = this.knownHeaders.get(filePath) || new Set<string>();
-				if (!existingHeaders.has(headingText)) {
-					existingHeaders.add(headingText);
-					this.knownHeaders.set(filePath, existingHeaders);
-
-					// Save updated headers to JSON
-					await this.saveKnownHeaders();
-				}
-
-				// Dynamically update the auto-toc block
-				this.updateAutoToc(editor, filePath);
+			while ((match = headerRegex.exec(fileContents)) !== null) {
+				headers.add(`${match[1]} ${match[2]}`); // Store full heading including '#' symbols
 			}
+
+			// Update the known headers storage
+			const filePath = file.path;
+			const existingHeaders = this.knownHeaders.get(filePath) || new Set<string>();
+
+			// Add new headings
+			headers.forEach(header => {
+				existingHeaders.add(header);
+			});
+
+			// Remove headings that no longer exist
+			existingHeaders.forEach(header => {
+				if (!headers.has(header)) {
+					existingHeaders.delete(header);
+				}
+			});
+
+			this.knownHeaders.set(filePath, existingHeaders);
+
+			// Save updated headers to JSON
+			await this.saveKnownHeaders();
+
+			// Dynamically update the auto-toc block
+			this.updateAutoToc(editor, filePath);
 		}
 	}
 }
