@@ -27,8 +27,7 @@ export default class AutoToc extends Plugin {
 	//)}/data.json`;
 	public settings: AutoTocSettings;
 	public headersObject: Record<string, string[]> = (knownHeadersJson as any).default;
-	//private
-	knownHeaders: Map<string, Set<string>> = new Map();
+	private knownHeaders: Map<string, string[]> = new Map();
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
@@ -68,37 +67,22 @@ export default class AutoToc extends Plugin {
 				async (file: TFile | null): Promise<EventRef | void> => {
 					if (!file) return;
 
-					const headers: Set<string> = new Set<string>();
+					const headers: string[] = []; // Used for live temporary storage for comparisons
 					const headerRegex: RegExp = /^#+\s(.+)$/gm; // Heading text excluding all "#"
-					const fileContents: string = await this.app.vault.read(file); // All file content
+					const fileContents: string = await this.app.vault.read(file); // All file contents
 					
 					// Extract headers from the file
 					let match: RegExpExecArray | null;
 					while ((match = headerRegex.exec(fileContents)) !== null) {
 						// Store full heading including '#' symbols
-						headers.add(`${match[1]} ${match[2]}`);
+						headers.push(`${match[1]} ${match[2]}`);
 					}
 
 					// Update known headers class storage
 					const filePath: string = file.path;
-					const existingHeaders: Set<string> = this.knownHeaders.get(filePath) || new Set<string>();
-
-					// Add new headers
-					headers.forEach((header: string): void => {
-						if (!existingHeaders.has(header)) {
-							existingHeaders.add(header);
-						}
-					});
-
-					// Remove headers that no longer exist
-					existingHeaders.forEach((header: string): void => {
-						if (!headers.has(header)) {
-							existingHeaders.delete(header);
-						}
-					});
 
 					// Save updated headers to both JSON and class storage
-					this.knownHeaders.set(filePath, existingHeaders);
+					this.knownHeaders.set(filePath, headers);
 					await this.saveKnownHeaders();
 				}
 			)
@@ -108,7 +92,7 @@ export default class AutoToc extends Plugin {
 		this.registerEvent(
 			this.app.vault.on(
 				"modify",
-				debounce(this.handleEditorChange.bind(this), 500)
+				debounce(this.handleEditorChange.bind(this), 2000)
 			)
 		);
 
@@ -133,16 +117,12 @@ export default class AutoToc extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async onExternalSettingsChange() {
-		await this.saveSettings();
-	}
-
 	// Save known headers to JSON storage
 	private async saveKnownHeaders(): Promise<void> {
 		const headersObject: Record<string, string[]> = {};
 		
 		// Add all current headers to the object and write it to the JSON file
-		this.knownHeaders.forEach((headers: Set<string>, filePath: string) => {
+		this.knownHeaders.forEach((headers: string[], filePath: string) => {
 			headersObject[filePath] = Array.from(headers);
 		});
 		await this.app.vault.adapter.write('.obsidian/plugins/auto-toc/src/headers.json', JSON.stringify(headersObject, null, 2));
@@ -229,7 +209,7 @@ export default class AutoToc extends Plugin {
 		try {
 			Object.entries(headers).forEach(([filePath, headers]) => {
 				if (Array.isArray(headers)) {
-					this.knownHeaders.set(filePath, new Set(headers));
+					this.knownHeaders.set(filePath, headers);
 				} else {
 					console.error(`Invalid headers for "${filePath}": ${headers}`);
 				}
@@ -248,7 +228,7 @@ export default class AutoToc extends Plugin {
 
 		if (fileHeadings) { // File has headings present
 			// Obtain the active file's headings, or create a new set if not present
-			const headers: Set<string> = this.knownHeaders.get(filePath) || new Set<string>();
+			const headers: string[] = this.knownHeaders.get(filePath) || [];
 
 			// Obtain start/end insertion position from the RegExpExecArray index
 			const tocStartPos: EditorPosition = editor.offsetToPos(fileHeadings.index);
@@ -275,7 +255,7 @@ export default class AutoToc extends Plugin {
 		} else if (activeEditor) { // File doesn't have headings present
 			// Handle editor position while accounting for potential file properties
 			const insertPos: EditorPosition = this.getTocInsertPosition(activeEditor);
-			const headers: Set<string> = this.knownHeaders.get(filePath) || new Set<string>();
+			const headers: string[] = this.knownHeaders.get(filePath) || [];
 
 			// Generate the TOC content
 			const tocContent: string = Array.from(headers)
@@ -300,33 +280,18 @@ export default class AutoToc extends Plugin {
 
 		if (editor && file) {
 			const fileContents: string = editor.getValue();
-			const headers: Set<string> = new Set<string>();
+			const headers: string[] = [];
 			const headerRegex: RegExp = /^(#+)\s+(.+)$/gm;
 			
 			// Extract all headings from the file
 			let match: RegExpExecArray | null;
 			while ((match = headerRegex.exec(fileContents)) !== null) {
-				headers.add(`${match[1]} ${match[2]}`); // Store full heading including '#' symbols
+				headers.push(`${match[1]} ${match[2]}`); // Store full heading including '#' symbols
 			}
 
 			// Update the known headers storage
 			const filePath: string = file.path;
-			const existingHeaders: Set<string> = this.knownHeaders.get(filePath) || new Set<string>();
-
-			// Add new headings
-			headers.forEach((header: string): void => {
-				existingHeaders.add(header);
-			});
-
-			// Remove headings that no longer exist
-			existingHeaders.forEach((header: string): void => {
-				if (!headers.has(header)) {
-					existingHeaders.delete(header);
-				}
-			});
-
-			// Update the class mapping (Map<string, Set<string>>) of the JSON headers
-			this.knownHeaders.set(filePath, existingHeaders);
+			this.knownHeaders.set(filePath, headers);
 
 			// Save updated headers to the JSON file
 			await this.saveKnownHeaders();
