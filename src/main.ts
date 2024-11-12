@@ -14,7 +14,7 @@ import { AutoTocSettings, DEFAULT_SETTINGS } from './settings/Settings';
 import { SettingTab } from './settings/SettingsTab';
 import { deepmerge } from 'deepmerge-ts';
 import * as knownHeadersJson from './headers.json';
-import { debounce } from './utils/debounce';
+import { debounce } from 'Utility';
 import { MetadataEditor, PropertyEntryData } from 'obsidian-typings';
 
 
@@ -24,16 +24,10 @@ export default class AutoToc extends Plugin {
 	private settings: AutoTocSettings;
 	private headersObject: Record<string, string[]> = (knownHeadersJson as any).default;
 	private knownHeaders: Map<string, string[]> = new Map();
-
-	public get vault_name() { return Process.env.vaultName }
-	public relativePluginRoot = Process.env.pluginRoot.replace(
+	private relativePluginRoot = Process.env.pluginRoot.replace(
 		new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
 		''
 	);
-	public settingsDataJsonPath = `${Process.env.pluginRoot.replace(
-		new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
-		''
-	)}/data.json`;
 
 	constructor(app: App, manifest?: PluginManifest) {
 		const mainManifest = manifest ?? Process.env.pluginManifest;
@@ -255,7 +249,7 @@ export default class AutoToc extends Plugin {
 					return `${' '.repeat((level - 1) * 4)}- ${text}`;
 				})
 				.join('\n');
-
+			
 			// Replace the old TOC with the new content
 			const newTocBlock = `\`\`\`insta-toc\n${tocContent}\n\`\`\``;
 			editor.replaceRange(newTocBlock, tocStartPos, tocEndPos);

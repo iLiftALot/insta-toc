@@ -1,4 +1,3 @@
-// Declare the global "process" object and use your custom Process
 declare module "Process" {
     global {
         //@ts-ignore

@@ -9,6 +9,5 @@ interface String {
      * Capitilizes the first letter of a string.
      */
     capitalize(): string;
-
     quotePrune(): string;
 }

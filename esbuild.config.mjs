@@ -20,13 +20,15 @@ if you want to view the source, please visit the github repository of this plugi
 `;
 
 const prod = process.argv.includes('production');
+const shouldLog = process.argv.includes('logger');
+let logs = [];
 
 // Correctly handle the file URL to path conversion
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load the package.json file
-const packageJsonPath = path.join(__dirname, 'package.json'); // use path.join instead of resolve
+const packageJsonPath = path.join(__dirname, 'package.json');
 const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 
 const manifestJsonPath = path.join(__dirname, 'manifest.json');
@@ -44,20 +46,25 @@ const packageMain = prod ? "dist/build/main.js" : "dist/dev/main.js";
 packageJson.main = packageMain;
 writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 4), 'utf-8');
 
-console.log('Package Name:', packageName);
-console.log(`Set main.js directory to ${packageJson.main}`);
+logs.push('Package Name:', packageName);
+logs.push(`Set main.js directory to ${packageJson.main}`);
 
 // Function to find .env file by traversing upward
 function findEnvFile(startDir) {
 	let currentDir = startDir;
 
 	while (currentDir !== path.parse(currentDir).root) {
-		const envPath = path.join(currentDir, '.env');
-		if (existsSync(envPath)) {
-			return envPath;
+		try {
+			const envPath = path.join(currentDir, '.env');
+			if (existsSync(envPath)) {
+				return envPath;
+			}
+			currentDir = path.dirname(currentDir);
+			logs.push(`CURRENT DIR: ${currentDir}`);
+		} catch (err) {
+			logs.push(`Error in findEnvFile: ${err}`);
+			return null;
 		}
-		currentDir = path.dirname(currentDir);
-		console.log(`CURRENT DIR: ${currentDir}`);
 	}
 	return null;
 }
@@ -70,7 +77,7 @@ if (!envFilePath) {
 	envFilePath = `${dirYielder.split('/file:')[0]}/.env`;
 	writeFileSync(envFilePath, '');
 }
-console.log(`Found .env file at ${envFilePath}`);
+logs.push(`Found .env file at ${envFilePath}`);
 
 const { pluginRoot, projectRoot, vaultRoot, envPath } = {
 	pluginRoot: `${path.dirname(dirYielder.split('/file:')[0])}/${packageName}`,
@@ -78,24 +85,30 @@ const { pluginRoot, projectRoot, vaultRoot, envPath } = {
 	vaultRoot: decodeURI(dirYielder.split('/file:')[1].replace(/\/\.obsidian.*/, '')),
 	envPath: envFilePath
 };
-console.log(`pluginRoot: ${pluginRoot}\nprojectRoot: ${projectRoot}\nvaultRoot: ${vaultRoot}\nenvPath: ${envPath}`);
+logs.push(`pluginRoot: ${pluginRoot}\nprojectRoot: ${projectRoot}\nvaultRoot: ${vaultRoot}\nenvPath: ${envPath}`);
 const vaultName = decodeURI(vaultRoot.split('/').pop().trim());
 
 let parsedEnv = {};
 if (envFilePath) {
 	const envConfig = config({ path: envFilePath });
-	if (envConfig?.parsed) {
-		console.log(`Loaded .env file from ${envFilePath}`);
+	if (envConfig.parsed) {
+		logs.push(`Loaded .env file from ${envFilePath}`);
+
 		parsedEnv = envConfig.parsed;
 		parsedEnv["envPath"] = envPath;
 		parsedEnv["pluginRoot"] = pluginRoot;
+		parsedEnv["pluginManifest"] = manifestJson;
+		parsedEnv["pluginSettingsPath"] = dataJsonPath;
+		parsedEnv["pluginSettings"] = dataJson;
 		parsedEnv["projectRoot"] = projectRoot;
 		parsedEnv["vaultRoot"] = vaultRoot;
-		parsedEnv["pluginManifest"] = manifestJson;
 		parsedEnv["vaultName"] = vaultName;
+
+		logs.push(`parsedEnv: ${JSON.stringify(parsedEnv, null, 4)}`);
+	} else {
+		logs.push(`WARNING: Unable to parse .env file: ${envConfig.error}`);
 	}
 }
-console.log(`parsedEnv: ${JSON.stringify(parsedEnv, null, 4)}`);
 
 const sourcePath = `${pluginRoot}/${packageMain}`;
 const targetPath = `${pluginRoot}/main.js`;
@@ -142,11 +155,14 @@ try {
 		unlinkSync(targetPath); // Remove existing symlink or file
 	}
 	symlinkSync(sourcePath, targetPath);
-	console.log(`Symlink created: ${targetPath} -> ${sourcePath}`);
+	logs.push(`Symlink created: ${targetPath} -> ${sourcePath}`);
 } catch (error) {
 	console.error('Error creating symlink:', error);
 	process.exit(1);
 }
+
+logs = logs.join('\n');
+if (shouldLog) console.log(logs);
 
 if (prod) {
 	await context.rebuild();

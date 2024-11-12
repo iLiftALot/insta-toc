@@ -22,6 +22,9 @@
       "obsidian-typings/implementations": [
         "node_modules/obsidian-typings/dist/implementations.d.ts",
         "node_modules/obsidian-typings/dist/implementations.cjs"
+      ],
+      "Utility": [
+        "./typings/Utility"
       ]
     },
     "outDir": "./dist"

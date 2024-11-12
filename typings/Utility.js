@@ -1,6 +1,9 @@
-export function debounce(func: (...args: any[]) => void, wait: number) {
-    let timeout: number | null = null;
-    return function (...args: any[]) {
+export function debounce(
+    func,
+    wait
+) {
+    let timeout = null;
+    return function (...args) {
         if (timeout !== null) {
             clearTimeout(timeout);
         }
