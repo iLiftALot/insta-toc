@@ -1,10 +1,10 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import AutoToc from '../main';
+import InstaToc from '../main';
 
 export class SettingTab extends PluginSettingTab {
-    plugin: AutoToc;
+    plugin: InstaToc;
 
-    constructor(app: App, plugin: AutoToc) {
+    constructor(app: App, plugin: InstaToc) {
         super(app, plugin);
         this.plugin = plugin;
     }

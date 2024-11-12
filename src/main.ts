@@ -11,7 +11,7 @@ import {
 	PluginManifest,
 	TFile
 } from 'obsidian';
-import { AutoTocSettings, DEFAULT_SETTINGS } from './settings/Settings';
+import { InstaTocSettings, DEFAULT_SETTINGS } from './settings/Settings';
 import { SettingTab } from './settings/SettingsTab';
 import { deepmerge } from 'deepmerge-ts';
 import * as knownHeadersJson from './headers.json';
@@ -19,10 +19,10 @@ import { debounce } from 'Utility';
 import { MetadataEditor, PropertyEntryData } from 'obsidian-typings';
 
 
-export default class AutoToc extends Plugin {
+export default class InstaToc extends Plugin {
 	public app: App;
 
-	private settings: AutoTocSettings;
+	private settings: InstaTocSettings;
 	private headersObject: Record<string, string[]> = (knownHeadersJson as any).default;
 	private knownHeaders: Map<string, string[]> = new Map();
 	private relativePluginRoot = Process.env.pluginRoot.replace(
@@ -186,7 +186,7 @@ export default class AutoToc extends Plugin {
 	}
 
 	// Dynamically update the TOC
-	private updateAutoToc(editor: Editor, filePath: string): void {
+	private updateInstaToc(editor: Editor, filePath: string): void {
 		const activeEditor: MarkdownFileInfo | null = this.app.workspace.activeEditor;
 		const tocRegex: RegExp = /^```insta-toc\n([\s\S]*?)\n```/gm;
 		const fileContents: string = editor.getValue();
@@ -263,7 +263,7 @@ export default class AutoToc extends Plugin {
 			await this.saveKnownHeaders();
 
 			// Dynamically update the insta-toc codeblock
-			this.updateAutoToc(editor, filePath);
+			this.updateInstaToc(editor, filePath);
 		}
 	}
 }

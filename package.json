@@ -1,7 +1,7 @@
 {
     "name": "insta-toc",
-    "version": "1.0.0",
-    "description": "Template plugin for Obsidian.",
+    "version": "1.0.2",
+    "description": "Simultaneously generate, update, and maintain a table of contents for your notes.",
     "main": "dist/dev/main.js",
     "scripts": {
         "dev:log": "node esbuild.config.mjs logger && terser -o dist/dev/main.js dist/dev/main.js",

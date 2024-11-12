@@ -1,19 +1,19 @@
 import { App, Editor, TFile } from "obsidian";
-import AutoToc from "./main";
-import { AutoTocSettings } from "./settings/Settings";
+import InstaToc from "./main";
+import { InstaTocSettings } from "./settings/Settings";
 
 
 export class TocGenerator {
     app: App;
-    plugin: AutoToc;
-    settings: AutoTocSettings;
+    plugin: InstaToc;
+    settings: InstaTocSettings;
     file: TFile;
     editor: Editor;
 
     constructor(
         app: App,
-        plugin: AutoToc,
-        settings: AutoTocSettings,
+        plugin: InstaToc,
+        settings: InstaTocSettings,
         file: TFile,
         editor: Editor
     ) {
