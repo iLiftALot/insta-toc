@@ -74,12 +74,12 @@ console.log(`Found .env file at ${envFilePath}`);
 
 const { pluginRoot, projectRoot, vaultRoot, envPath } = {
 	pluginRoot: `${path.dirname(dirYielder.split('/file:')[0])}/${packageName}`,
-	projectRoot: dirYielder.split('/file:')[1],
-	vaultRoot: dirYielder.split('/file:')[1].replace(/\/\.obsidian.*/, ''),
+	projectRoot: decodeURI(dirYielder.split('/file:')[1]),
+	vaultRoot: decodeURI(dirYielder.split('/file:')[1].replace(/\/\.obsidian.*/, '')),
 	envPath: envFilePath
 };
 console.log(`pluginRoot: ${pluginRoot}\nprojectRoot: ${projectRoot}\nvaultRoot: ${vaultRoot}\nenvPath: ${envPath}`);
-const vaultName = vaultRoot.split('/').pop().trim();
+const vaultName = decodeURI(vaultRoot.split('/').pop().trim());
 
 let parsedEnv = {};
 if (envFilePath) {

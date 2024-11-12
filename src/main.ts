@@ -19,20 +19,28 @@ import { MetadataEditor, PropertyEntryData } from 'obsidian-typings';
 
 
 export default class AutoToc extends Plugin {
-	public static app: App;
-	public static get vault_name() { return Process.env.vaultName }
-	//public static settingsConfigPath = `${Process.env.pluginRoot.replace(
-	//	new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
-	//	''
-	//)}/data.json`;
-	public settings: AutoTocSettings;
-	public headersObject: Record<string, string[]> = (knownHeadersJson as any).default;
+	public app: App;
+
+	private settings: AutoTocSettings;
+	private headersObject: Record<string, string[]> = (knownHeadersJson as any).default;
 	private knownHeaders: Map<string, string[]> = new Map();
 
-	constructor(app: App, manifest: PluginManifest) {
-		super(app, manifest);
-		this.app = app;
+	public get vault_name() { return Process.env.vaultName }
+	public relativePluginRoot = Process.env.pluginRoot.replace(
+		new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
+		''
+	);
+	public settingsDataJsonPath = `${Process.env.pluginRoot.replace(
+		new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
+		''
+	)}/data.json`;
 
+	constructor(app: App, manifest?: PluginManifest) {
+		const mainManifest = manifest ?? Process.env.pluginManifest;
+		
+		super(app, mainManifest);
+		this.app = app;
+		
 		this.loadSettings().then(() => {
 			// Load known headers from JSON
 			this.initKnownHeaders();
@@ -125,7 +133,7 @@ export default class AutoToc extends Plugin {
 		this.knownHeaders.forEach((headers: string[], filePath: string) => {
 			headersObject[filePath] = Array.from(headers);
 		});
-		await this.app.vault.adapter.write('.obsidian/plugins/insta-toc/src/headers.json', JSON.stringify(headersObject, null, 2));
+		await this.app.vault.adapter.write(`${this.relativePluginRoot}/src/headers.json`, JSON.stringify(headersObject, null, 4));
 	}
 
 	// Check for file properties and adjust insertion position accordingly
