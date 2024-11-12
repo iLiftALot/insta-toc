@@ -1,6 +1,7 @@
 import {
 	App,
 	Editor,
+	EditorPosition,
 	MarkdownFileInfo,
 	MarkdownPostProcessorContext,
 	MarkdownView,
@@ -11,16 +12,17 @@ import {
 import { AutoTocSettings, DEFAULT_SETTINGS } from './settings/Settings';
 import { SettingTab } from './settings/SettingsTab';
 import { deepmerge } from 'deepmerge-ts';
-import * as knownHeadersJson from 'src/headers.json';
+import * as knownHeadersJson from './headers.json';
+import { debounce } from './utils/debounce';
 
 
 export default class AutoToc extends Plugin {
 	public static app: App;
-	public static get vault_name() { return Process.env.vaultName }
-	public static settingsConfigPath = `${Process.env.pluginRoot.replace(
-		new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
-		''
-	)}/data.json`;
+	//public static get vault_name() { return Process.env.vaultName }
+	//public static settingsConfigPath = `${Process.env.pluginRoot.replace(
+	//	new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
+	//	''
+	//)}/data.json`;
 	public settings: AutoTocSettings;
 	public manifest: PluginManifest;
 
@@ -28,7 +30,10 @@ export default class AutoToc extends Plugin {
 	public isFile: boolean;
 	public hasToc: boolean;
 	public shouldGenerateToc: boolean;
-	private knownHeaders: Map<string, Set<string>> = new Map();
+	
+	public headersObject: Record<string, string[]> = (knownHeadersJson as any).default;
+	//private
+	knownHeaders: Map<string, Set<string>> = new Map();
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
@@ -50,9 +55,6 @@ export default class AutoToc extends Plugin {
 
 		await this.loadSettings();
 		this.addSettingTab(new SettingTab(this.app, this));
-
-		// Load known headers from JSON
-		this.initKnownHeaders();
 
 		this.registerMarkdownCodeBlockProcessor(
 			"auto-toc",
@@ -144,38 +146,13 @@ export default class AutoToc extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on(
 				"editor-change",
-				async (editor: Editor, info: MarkdownView | MarkdownFileInfo) => {
-					const editorState = editor.activeCm?.state;
-					const file = info.file;
-
-					if (editorState && file && info instanceof MarkdownView) {
-						const currentLineNumber = editorState.selection.main.head;
-						const currentLineText = editorState.doc.lineAt(currentLineNumber).text;
-
-						// Check if the user is starting a new heading
-						const headingMatch = currentLineText.match(/^(#+)\s(.+)$/);
-						if (headingMatch) {
-							const level = headingMatch[1].length;
-							const headingText = headingMatch[2];
-
-							// Update the known headers storage
-							const filePath = file.path;
-							const existingHeaders = this.knownHeaders.get(filePath) || new Set<string>();
-							if (!existingHeaders.has(headingText)) {
-								existingHeaders.add(headingText);
-								this.knownHeaders.set(filePath, existingHeaders);
-
-								// Save updated headers to JSON
-								await this.saveKnownHeaders();
-							}
-
-							// Dynamically update the auto-toc block
-							this.updateAutoToc(editor, filePath);
-						}
-					}
-				}
+				debounce(this.handleEditorChange.bind(this), 500)
 			)
 		);
+
+		//console.log(JSON.stringify(this.headersObject, null, 4))
+		// Load known headers from JSON
+		this.initKnownHeaders();
 	}
 
 	onunload() {
@@ -205,40 +182,99 @@ export default class AutoToc extends Plugin {
 		this.knownHeaders.forEach((headers, filePath) => {
 			headersObject[filePath] = Array.from(headers);
 		});
-		await this.app.vault.adapter.write('src/headers.json', JSON.stringify(headersObject, null, 2));
+		await this.app.vault.adapter.write('.obsidian/plugins/auto-toc/src/headers.json', JSON.stringify(headersObject, null, 2));
 	}
 
 	// Load known headers from JSON
 	private initKnownHeaders(): void {
-		Object.entries(knownHeadersJson).forEach(([filePath, headers]) => {
-			this.knownHeaders.set(filePath, new Set(headers as string[]));
-		});
+		const headers = this.headersObject;
+		try {
+			Object.entries(headers).forEach(([filePath, headers]) => {
+			if (Array.isArray(headers)) {
+				this.knownHeaders.set(filePath, new Set(headers));
+			} else {
+				console.error(`Invalid headers for "${filePath}": ${headers}\ntypeof headers === ${typeof headers} <--> typeof filePath === ${typeof filePath}\n${console.log(this.knownHeaders)}`);
+			}
+			});
+		} catch (error) {
+			console.error("Failed to initialize known headers:", error);
+		}
 	}
 
-	// Method to update the auto-toc block
 	private updateAutoToc(editor: Editor, filePath: string) {
-		const doc = editor.getDoc();
+		const fileContents = editor.getValue();
 		const tocRegex = /^```auto-toc\n([\s\S]*?)\n```/gm;
-		const fileContents = doc.getValue();
-		const match = tocRegex.exec(fileContents);
+		let match = tocRegex.exec(fileContents);
 
 		if (match) {
-			//const tocStart = match.index;
-			//const tocEnd = tocStart + match[0].length;
+			const tocStartPos = editor.offsetToPos(match.index);
+			const tocEndPos = editor.offsetToPos(match.index + match[0].length);
 			const headers = this.knownHeaders.get(filePath) || new Set<string>();
 
 			// Generate the new TOC content
 			const tocContent = Array.from(headers)
 				.map((header: string) => {
-					const level = header.match(/^#+/)?.[0].length ?? 1;
-					const text = header.replace(/^#+\s/, '');
+					const levelMatch = header.match(/^(#+)\s+/);
+					const level = levelMatch ? levelMatch[1].length : 1;
+					const text = header.replace(/^#+\s+/, '');
+					console.log(level);
 					return `${' '.repeat((level - 1) * 4)}- ${text}`;
 				})
-				.filter(Boolean)
 				.join('\n');
 
+			const newTocBlock = `\`\`\`auto-toc\n${tocContent}\n\`\`\``;
+
 			// Replace the old TOC with the new content
-			doc.replaceRange(`\`\`\`auto-toc\n${tocContent}\n\`\`\``, doc.getCursor("from"), doc.getCursor("to"));
+			editor.replaceRange(newTocBlock, tocStartPos, tocEndPos);
+		} else {
+			// Insert the TOC at the top of the document if it doesn't exist
+			const insertPos = { line: 0, ch: 0 };
+			const headers = this.knownHeaders.get(filePath) || new Set<string>();
+
+			// Generate the TOC content
+			const tocContent = Array.from(headers)
+				.map((header: string) => {
+					const levelMatch = header.match(/^(#+)\s+/);
+					const level = levelMatch ? levelMatch[1].length : 1;
+					const text = header.replace(/^#+\s+/, '');
+					return `${' '.repeat((level - 1) * 4)}- ${text}`;
+				})
+				.join('\n');
+
+			const newTocBlock = `\`\`\`auto-toc\n${tocContent}\n\`\`\`\n\n`;
+
+			// Insert the TOC at the determined position
+			editor.replaceRange(newTocBlock, insertPos);
+		}
+	}
+
+	private async handleEditorChange(editor: Editor, info: MarkdownView | MarkdownFileInfo) {
+		const file = info.file;
+
+		if (editor && file && info instanceof MarkdownView) {
+			const currentLineNumber = editor.getCursor("head").line;
+			const currentLineText = editor.getLine(currentLineNumber);
+
+			// Check if the user is typing a heading
+			const headingMatch = currentLineText.match(/^(#+)\s+(.+)$/);
+			if (headingMatch) {
+				const level = headingMatch[1].length;
+				const headingText = headingMatch[2];
+
+				// Update the known headers storage
+				const filePath = file.path;
+				const existingHeaders = this.knownHeaders.get(filePath) || new Set<string>();
+				if (!existingHeaders.has(headingText)) {
+					existingHeaders.add(headingText);
+					this.knownHeaders.set(filePath, existingHeaders);
+
+					// Save updated headers to JSON
+					await this.saveKnownHeaders();
+				}
+
+				// Dynamically update the auto-toc block
+				this.updateAutoToc(editor, filePath);
+			}
 		}
 	}
 }

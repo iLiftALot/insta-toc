@@ -1,5 +1,5 @@
 {
-    "name": "template-plugin",
+    "name": "auto-toc",
     "version": "1.0.0",
     "description": "Template plugin for Obsidian.",
     "main": "dist/dev/main.js",
