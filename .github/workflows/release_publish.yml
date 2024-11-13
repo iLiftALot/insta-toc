@@ -3,14 +3,17 @@ name: Release and Publish
 on:
   push:
     tags:
-      - 'v*'
+      - '[0-9]+.[0-9]+.[0-9]+'
     branches:
-      - 'master'
+      - 'development'
+  pull_request:
+    branches:
+      - development
   workflow_dispatch:
     inputs:
       version_type:
         description: 'Specify version bump type'
-        required: false
+        required: true
         default: 'patch'
         type: choice
         options:
