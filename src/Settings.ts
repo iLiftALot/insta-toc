@@ -8,4 +8,3 @@ export const DEFAULT_SETTINGS: InstaTocSettings = {
     shouldGenToc: false
 }
 
-

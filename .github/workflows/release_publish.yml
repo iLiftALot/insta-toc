@@ -1,0 +1,99 @@
+name: Release and Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - 'master'
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Specify version bump type'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+    contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Version Bump Script
+        run: npm run bump-version
+
+      - name: Commit Version Bump Changes
+        run: |
+          git add .
+          git commit -m "Update manifest and versions"
+
+      - name: Update Version
+        id: update_version
+        run: |
+          npm version ${{ github.event.inputs.version_type || 'patch' }} -m "Automated bump to %s"
+          new_version=$(node -p "require('./package.json').version")
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Commit Build Artifacts
+        run: |
+          git add .
+          git commit -m "Build artifacts for version ${{ steps.update_version.outputs.new_version }}"
+
+      - name: Set up authentication
+        run: |
+          git remote set-url origin https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Push Changes
+        run: |
+          git push origin HEAD --follow-tags
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.1.0
+        with:
+          tag_name: "v${{ steps.update_version.outputs.new_version }}"
+          name: "Release v${{ steps.update_version.outputs.new_version }}"
+          body: |
+            Automated release of version v${{ steps.update_version.outputs.new_version }}.
+
+      - name: Upload Plugin Files
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: insta-toc-${{ steps.update_version.outputs.new_version }}
+          path: |
+            manifest.json
+            main.js
+            styles.css

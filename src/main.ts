@@ -1,45 +1,32 @@
 import {
 	App,
+	CachedMetadata,
 	Editor,
 	EditorPosition,
-	EventRef,
+	EditorRange,
+	HeadingCache,
 	MarkdownFileInfo,
 	MarkdownPostProcessorContext,
 	MarkdownRenderer,
-	MarkdownView,
 	Plugin,
 	PluginManifest,
+	SectionCache,
 	TFile
 } from 'obsidian';
-import { InstaTocSettings, DEFAULT_SETTINGS } from './settings/Settings';
-import { SettingTab } from './settings/SettingsTab';
+import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
+import { SettingTab } from './SettingsTab';
 import { deepmerge } from 'deepmerge-ts';
-import * as knownHeadersJson from './headers.json';
 import { debounce } from 'Utility';
-import { MetadataEditor, PropertyEntryData } from 'obsidian-typings';
 
 
-export default class InstaToc extends Plugin {
+export default class InstaTocPlugin extends Plugin {
 	public app: App;
-
-	private settings: InstaTocSettings;
-	private headersObject: Record<string, string[]> = (knownHeadersJson as any).default;
-	private knownHeaders: Map<string, string[]> = new Map();
-	private relativePluginRoot = Process.env.pluginRoot.replace(
-		new RegExp(`[A-Za-z0-9_-\\s/]+?${decodeURI(Process.env.vaultName)}/`, 'g'),
-		''
-	);
+	public settings: InstaTocSettings;
 
 	constructor(app: App, manifest?: PluginManifest) {
 		const mainManifest = manifest ?? Process.env.pluginManifest;
-		
 		super(app, mainManifest);
 		this.app = app;
-		
-		this.loadSettings().then(() => {
-			// Load known headers from JSON
-			this.initKnownHeaders();
-		});
 	}
 
 	async onload() {
@@ -48,74 +35,40 @@ export default class InstaToc extends Plugin {
 		await this.loadSettings();
 		this.addSettingTab(new SettingTab(this.app, this));
 
-		// Step 1: Create a custom codeblock processor for the table of contents
+		// Custom codeblock processor for the insta-toc codeblock
 		this.registerMarkdownCodeBlockProcessor(
 			"insta-toc",
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> => {
-				const pathWithFileExtension: string = ctx.sourcePath;
+				const pathWithFileExtension: string = ctx.sourcePath; // Includes .md
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 
-				const lines = source.split('\n');
-				const processedLines = lines.map((line) => {
-					if (!line.trim()) return line;
+				const listRegex = /^(\s*)-\s*(.*)/; // Regex to match leading spaces/tabs, bullet, and content
+				const lines: string[] = source.split('\n'); // insta-toc codeblock content
 
-					// Match leading spaces or tabs and the content
-					const match = line.match(/^(\s*)(-)\s*(.*)/);
+				// Process the codeblock text by converting each line into a markdown link list item
+				const processedSource: string = lines.map((line) => {
+					const match: RegExpMatchArray | null = line.match(listRegex);
 					if (!match) return line;
 
-					const indent = match[1];
-					const bullet = match[2];
-					const contentText = match[3];
+					const [, indent, contentText]: RegExpMatchArray = match;
 					const navLink = `${filePath}#${contentText}`;
 
-					return `${indent}${bullet} [[${navLink}|${contentText}]]`;
-				});
-
-				const processedSource = processedLines.join('\n');
+					return `${indent}- [[${navLink}|${contentText}]]`;
+				})
+					.join('\n');
 
 				// Now render the markdown
-				await MarkdownRenderer.render(this.app, processedSource, el, ctx.sourcePath, this);
+				await MarkdownRenderer.render(this.app, processedSource, el, pathWithFileExtension, this);
 			}
 		);
 
-		// Step 2: Obtain all headers and update storages within the file when opened
-		this.registerEvent(
-			this.app.workspace.on(
-				"file-open",
-				async (file: TFile | null): Promise<EventRef | void> => {
-					if (!file) return;
-
-					const headers: string[] = []; // Used for live temporary storage for comparisons
-					const headerRegex: RegExp = /^#+\s(.+)$/gm; // Heading text excluding all "#"
-					const fileContents: string = await this.app.vault.read(file); // All file contents
-					
-					// Extract headers from the file
-					let match: RegExpExecArray | null;
-					while ((match = headerRegex.exec(fileContents)) !== null) {
-						// Store full heading including '#' symbols
-						headers.push(`${match[1]} ${match[2]}`);
-					}
-
-					// Update known headers class storage
-					const filePath: string = file.path;
-
-					// Save updated headers to both JSON and class storage
-					this.knownHeaders.set(filePath, headers);
-					await this.saveKnownHeaders();
-				}
-			)
-		);
-
-		// Step 3: Detect when the user types and update headers
+		// Detect when the user types and update headers
 		this.registerEvent(
 			this.app.vault.on(
 				"modify",
 				debounce(this.handleEditorChange.bind(this), 2000)
 			)
 		);
-
-		// Load known headers from JSON
-		this.initKnownHeaders();
 	}
 
 	onunload() {
@@ -135,135 +88,70 @@ export default class InstaToc extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	// Save known headers to JSON storage
-	private async saveKnownHeaders(): Promise<void> {
-		const headersObject: Record<string, string[]> = {};
-		
-		// Add all current headers to the object and write it to the JSON file
-		this.knownHeaders.forEach((headers: string[], filePath: string) => {
-			headersObject[filePath] = Array.from(headers);
-		});
-		await this.app.vault.adapter.write(`${this.relativePluginRoot}/src/headers.json`, JSON.stringify(headersObject, null, 4));
+	// Provides the insert location range for the new insta-toc codeblock
+	private getTocInsertPosition(instaTocSection: SectionCache): EditorRange {
+		// Define the star/end line/character index
+		const startLine: number = instaTocSection.position.start.line;
+		const startCh = 0;
+		const endLine: number = instaTocSection.position.end.line;
+		const endCh: number = instaTocSection.position.end.col;
+
+		const tocStartPos: EditorPosition = { line: startLine, ch: startCh };
+		const tocEndPos: EditorPosition = { line: endLine, ch: endCh };
+
+		return { from: tocStartPos, to: tocEndPos };
 	}
 
-	// Check for file properties and adjust insertion position accordingly
-	private getTocInsertPosition(activeEditor: MarkdownFileInfo): EditorPosition {
-		let insertPosition: EditorPosition = { line: 0, ch: 0 }; // Initially position for top of document
-		
-		const metaDataEditor: MetadataEditor | undefined = activeEditor.metadataEditor;
-		
-		if (!metaDataEditor) return insertPosition; // No metadata present
+	// Generates a new insta-toc codeblock
+	private generateToc(fileHeadings: HeadingCache[]): string {
+		const tocHeadingRefs: string[] = [];
 
-		const fileProperties: PropertyEntryData<unknown>[] = metaDataEditor.properties;
-		const fileHasProperties: boolean = fileProperties.length > 0;
+		// Iterate each heading cache object to generate the new TOC content
+		if (fileHeadings.length > 0) {
+			fileHeadings.forEach((headingCache: HeadingCache) => {
+				const headingLevel: number = headingCache.level;
+				const headingText: string = headingCache.heading;
+				const tocHeadingRef = `${' '.repeat((headingLevel - 1) * 4)}- ${headingText}`;
 
-		if (fileHasProperties) { // File contains metadata
-			const fileContent: string = metaDataEditor.owner.data; // Entire file content string
-			const propertyContent = fileContent.match(/^---[\s\S]*^---/gm) as RegExpMatchArray;
-			const propertyLinesAmount: number = propertyContent[0].split('\n').length;
-			
-			insertPosition.line = propertyLinesAmount; // Adjust line to insert after properties
-		}
-		
-		return insertPosition;
-	}
-
-	// Load known headers from JSON storage
-	private initKnownHeaders(): void {
-		const headers: Record<string, string[]> = this.headersObject;
-		
-		try {
-			Object.entries(headers).forEach(([filePath, headers]) => {
-				if (Array.isArray(headers)) {
-					this.knownHeaders.set(filePath, headers);
-				} else {
-					console.error(`Invalid headers for "${filePath}": ${headers}`);
-				}
+				tocHeadingRefs.push(tocHeadingRef);
 			});
-		} catch (error) {
-			console.error("Failed to initialize known headers:\n", error);
 		}
+
+		const tocContent: string = tocHeadingRefs.join('\n');
+		return `\`\`\`insta-toc\n${tocContent}\n\`\`\``;
 	}
 
 	// Dynamically update the TOC
-	private updateInstaToc(editor: Editor, filePath: string): void {
-		const activeEditor: MarkdownFileInfo | null = this.app.workspace.activeEditor;
-		const tocRegex: RegExp = /^```insta-toc\n([\s\S]*?)\n```/gm;
-		const fileContents: string = editor.getValue();
-		const fileHeadings: RegExpExecArray | null = tocRegex.exec(fileContents);
+	private updateAutoToc(editor: Editor, file: TFile): void {
+		// Extract the headings and sections from the active file's cache
+		const fileCache: CachedMetadata | null = this.app.metadataCache.getFileCache(file);
+		const fileHeadings: HeadingCache[] = fileCache?.headings ?? [];
+		const instaTocSection: SectionCache | undefined = fileCache?.sections
+			? fileCache.sections.find(
+				(section: SectionCache) => section.type === 'code' &&
+					editor.getLine(section.position.start.line) === '```insta-toc'
+			) : undefined;
 
-		if (fileHeadings) { // File has headings present
-			// Obtain the active file's headings, or create a new set if not present
-			const headers: string[] = this.knownHeaders.get(filePath) || [];
+		// Return early if no sections (which means no insta-toc blocks)
+		if (!instaTocSection) return;
 
-			// Obtain start/end insertion position from the RegExpExecArray index
-			const tocStartPos: EditorPosition = editor.offsetToPos(fileHeadings.index);
-			const tocEndPos: EditorPosition = editor.offsetToPos(fileHeadings.index + fileHeadings[0].length);
+		// Get the insertion position and generate the updated TOC
+		const tocInsertRange: EditorRange = this.getTocInsertPosition(instaTocSection);
+		const newTocBlock = this.generateToc(fileHeadings);
 
-			// Generate the new TOC content
-			const tocContent: string = Array.from(headers)
-				.map((header: string) => {
-					// Heading level based on amount of "#"
-					const levelMatch: RegExpMatchArray | null = header.match(/^(#+)\s+/);
-					const level: number = levelMatch ? levelMatch[1].length : 1;
-
-					// Heading text excluding all "#"
-					const text: string = header.replace(/^#+\s+/, '');
-					
-					return `${' '.repeat((level - 1) * 4)}- ${text}`;
-				})
-				.join('\n');
-			
-			// Replace the old TOC with the new content
-			const newTocBlock = `\`\`\`insta-toc\n${tocContent}\n\`\`\``;
-			editor.replaceRange(newTocBlock, tocStartPos, tocEndPos);
-		
-		} else if (activeEditor) { // File doesn't have headings present
-			// Handle editor position while accounting for potential file properties
-			const insertPos: EditorPosition = this.getTocInsertPosition(activeEditor);
-			const headers: string[] = this.knownHeaders.get(filePath) || [];
-
-			// Generate the TOC content
-			const tocContent: string = Array.from(headers)
-				.map((header: string) => {
-					const levelMatch: RegExpMatchArray | null = header.match(/^(#+)\s+/);
-					const level: number = levelMatch ? levelMatch[1].length : 1;
-					const text: string = header.replace(/^#+\s+/, '');
-					
-					return `${' '.repeat((level - 1) * 4)}- ${text}`;
-				})
-				.join('\n');
-
-			// Format and insert TOC at the determined position with new content
-			const newTocBlock = `\`\`\`insta-toc\n${tocContent}\n\`\`\`\n\n`;
-			editor.replaceRange(newTocBlock, insertPos);
-		}
+		// Replace the old TOC with the updated TOC
+		editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
 	}
 
 	// Main control method to handle all active file changes
-	private async handleEditorChange(file: TFile): Promise<void> {
-		const editor: Editor | undefined = this.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
+	private async handleEditorChange(): Promise<void> {
+		const activeEditor: MarkdownFileInfo | null = this.app.workspace.activeEditor;
+		const editor: Editor | undefined = activeEditor?.editor;
+		const file: TFile | undefined = activeEditor?.file ?? undefined;
 
-		if (editor && file) {
-			const fileContents: string = editor.getValue();
-			const headers: string[] = [];
-			const headerRegex: RegExp = /^(#+)\s+(.+)$/gm;
-			
-			// Extract all headings from the file
-			let match: RegExpExecArray | null;
-			while ((match = headerRegex.exec(fileContents)) !== null) {
-				headers.push(`${match[1]} ${match[2]}`); // Store full heading including '#' symbols
-			}
+		if (!activeEditor || !editor || !file) return;
 
-			// Update the known headers storage
-			const filePath: string = file.path;
-			this.knownHeaders.set(filePath, headers);
-
-			// Save updated headers to the JSON file
-			await this.saveKnownHeaders();
-
-			// Dynamically update the insta-toc codeblock
-			this.updateInstaToc(editor, filePath);
-		}
+		// Dynamically update the insta-toc codeblock
+		if (editor) this.updateAutoToc(editor, file);
 	}
 }

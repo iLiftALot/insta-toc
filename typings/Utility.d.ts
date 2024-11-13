@@ -4,4 +4,3 @@ declare module "Utility" {
         wait: number
     ): (...args: any[]) => void;
 }
-

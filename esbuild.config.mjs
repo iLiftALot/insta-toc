@@ -8,8 +8,7 @@ import {
 	existsSync,
 	writeFileSync,
 	readFileSync,
-	symlinkSync,
-	unlinkSync
+	copyFileSync
 } from "fs";
 
 const banner =
@@ -110,8 +109,11 @@ if (envFilePath) {
 	}
 }
 
-const sourcePath = `${pluginRoot}/${packageMain}`;
-const targetPath = `${pluginRoot}/main.js`;
+const sourcePath = path.resolve(`${pluginRoot}/${packageMain}`);
+const targetPath = path.resolve(`${pluginRoot}/main.js`);
+
+logs.push(`Source Path: ${sourcePath}`);
+logs.push(`Target Path: ${targetPath}`);
 
 const context = await esbuild.context({
 	banner: {
@@ -148,25 +150,27 @@ const context = await esbuild.context({
 }).catch((error) => {
 	console.error(error);
 	process.exit(1);
-})
+});
 
-try {
-	if (existsSync(targetPath)) {
-		unlinkSync(targetPath); // Remove existing symlink or file
+function copyMainJs() {
+	try {
+		// Copy the file instead of creating a symlink
+		copyFileSync(sourcePath, targetPath);
+		logs.push(`Copied file: ${sourcePath} -> ${targetPath}`);
+
+		logs = logs.join('\n');
+		if (shouldLog) console.log(logs);
+	} catch (error) {
+		console.error(`Error creating symlink: ${error}\nLogs:\n${logs.join('\n')}`);
+		process.exit(1);
 	}
-	symlinkSync(sourcePath, targetPath);
-	logs.push(`Symlink created: ${targetPath} -> ${sourcePath}`);
-} catch (error) {
-	console.error('Error creating symlink:', error);
-	process.exit(1);
 }
-
-logs = logs.join('\n');
-if (shouldLog) console.log(logs);
 
 if (prod) {
 	await context.rebuild();
-	process.exit(0);
+	copyMainJs();
+	await context.dispose();
 } else {
+	copyMainJs();
 	await context.watch();
 }

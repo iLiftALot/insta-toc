@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import InstaToc from '../main';
+import InstaToc from './main';
 
 export class SettingTab extends PluginSettingTab {
     plugin: InstaToc;
