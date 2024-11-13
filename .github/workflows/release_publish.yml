@@ -85,8 +85,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.1.0
         with:
-          tag_name: "v${{ steps.update_version.outputs.new_version }}"
-          name: "Release v${{ steps.update_version.outputs.new_version }}"
+          tag_name: "${{ steps.update_version.outputs.new_version }}"
+          name: "${{ steps.update_version.outputs.new_version }}"
           body: |
             Automated release of version v${{ steps.update_version.outputs.new_version }}.
 
