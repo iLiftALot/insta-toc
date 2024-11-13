@@ -1,6 +1,6 @@
 {
     "name": "insta-toc",
-    "version": "1.0.3",
+    "version": "2.0.0",
     "description": "Simultaneously generate, update, and maintain a table of contents for your notes.",
     "repository": {
         "directory": ".",
