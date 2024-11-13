@@ -19,7 +19,7 @@ on:
           - major
 
 permissions:
-    contents: write
+  contents: write
 
 jobs:
   release:
@@ -45,20 +45,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Version Bump Script
-        run: npm run bump-version
-
-      - name: Commit Version Bump Changes
-        run: |
-          git add .
-          git commit -m "Update manifest and versions"
-
       - name: Update Version
         id: update_version
         run: |
           npm version ${{ github.event.inputs.version_type || 'patch' }} -m "Automated bump to %s"
           new_version=$(node -p "require('./package.json').version")
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Run Version Bump Script
+        run: npm run bump-version
+
+      - name: Commit Version Bump Changes
+        run: |
+          git add .
+          git commit -m "Update manifest and versions to ${{
+            steps.update_version.outputs.new_version }}"
 
       - name: Build Project
         run: npm run build
