@@ -61,8 +61,7 @@ jobs:
       - name: Commit Version Bump Changes
         run: |
           git add .
-          git commit -m "Update manifest and versions to ${{
-            steps.update_version.outputs.new_version }}"
+          git commit -m "Update manifest and versions to ${{ steps.update_version.outputs.new_version }}"
 
       - name: Build Project
         run: npm run build
@@ -80,18 +79,18 @@ jobs:
         run: |
           git push origin HEAD --follow-tags
 
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+      #- name: Publish to npm
+      #  env:
+      #    NODE_AUTH_TOKEN: {{ secrets.NPM_TOKEN }}
+      #  run: npm publish
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2.1.0
-        with:
-          tag_name: "${{ steps.update_version.outputs.new_version }}"
-          name: "${{ steps.update_version.outputs.new_version }}"
-          body: |
-            Automated release of version v${{ steps.update_version.outputs.new_version }}.
+      #- name: Create GitHub Release
+      #  uses: softprops/action-gh-release@v2.1.0
+      #  with:
+      #    tag_name: "{{ steps.update_version.outputs.new_version }}"
+      #    name: "{{ steps.update_version.outputs.new_version }}"
+      #    body: |
+      #      Automated release of version v${{ steps.update_version.outputs.new_version }}.
 
       - name: Upload Plugin Files
         uses: actions/upload-artifact@v4.4.3
