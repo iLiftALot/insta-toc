@@ -93,13 +93,13 @@ jobs:
       #    NODE_AUTH_TOKEN: {{ secrets.NPM_TOKEN }}
       #  run: npm publish
 
-      #- name: Create GitHub Release
-      #  uses: softprops/action-gh-release@v2.1.0
-      #  with:
-      #    tag_name: "{{ steps.update_version.outputs.new_version }}"
-      #    name: "{{ steps.update_version.outputs.new_version }}"
-      #    body: |
-      #      Automated release of version v{{ steps.update_version.outputs.new_version }}.
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.1.0
+        with:
+          tag_name: "{{ env.VERSION }}"
+          name: "{{ env.VERSION }}"
+          body: |
+            Automated release of version {{ env.VERSION }}.
 
       - name: Upload Plugin Files
         uses: actions/upload-artifact@v4.4.3
