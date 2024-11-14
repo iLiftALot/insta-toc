@@ -1,10 +1,9 @@
 import { readFileSync, writeFileSync } from "fs";
-import * as path from 'path';
 
 // Define paths to the files to update
-const packagePath = path.join(__dirname, 'package.json');
-const manifestPath = path.join(__dirname, 'manifest.json');
-const versionsPath = path.join(__dirname, 'versions.json');
+const packagePath = 'package.json';
+const manifestPath = 'manifest.json';
+const versionsPath = 'versions.json';
 
 const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
 const manifestJson = JSON.parse(readFileSync(manifestPath, 'utf8'));

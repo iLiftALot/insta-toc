@@ -90,7 +90,7 @@ jobs:
       #    tag_name: "{{ steps.update_version.outputs.new_version }}"
       #    name: "{{ steps.update_version.outputs.new_version }}"
       #    body: |
-      #      Automated release of version v${{ steps.update_version.outputs.new_version }}.
+      #      Automated release of version v{{ steps.update_version.outputs.new_version }}.
 
       - name: Upload Plugin Files
         uses: actions/upload-artifact@v4.4.3
