@@ -40,6 +40,9 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Remove Tag Prefix
+        run: npm config set tag-version-prefix ""
+
       - name: Configure Git
         run: |
           git config user.name "GitHub Actions"
@@ -48,20 +51,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Update Version
-        id: update_version
-        run: |
-          npm version ${{ github.event.inputs.version_type || 'patch' }} -m "Automated bump to %s"
-          new_version=$(node -p "require('./package.json').version")
-          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+      - name: Get Version
+        id: get_version
+        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
 
-      - name: Run Version Bump Script
-        run: npm run bump-version
+      #- name: Update Version
+      #  id: update_version
+      #  run: |
+      #    npm version {{ github.event.inputs.version_type || 'patch' }} -m "Automated bump to %s"
+      #    new_version=$(node -p "require('./package.json').version")
+      #    echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
-      - name: Commit Version Bump Changes
-        run: |
-          git add .
-          git commit -m "Update manifest and versions to ${{ steps.update_version.outputs.new_version }}"
+      #- name: Run Version Bump Script
+      #  run: npm run bump-version
+
+      #- name: Commit Version Bump Changes
+      #  run: |
+      #    git add .
+      #    git commit -m "Update manifest and versions to s{{ steps.update_version.outputs.new_version }}"
 
       - name: Build Project
         run: npm run build
@@ -69,7 +76,7 @@ jobs:
       - name: Commit Build Artifacts
         run: |
           git add .
-          git commit -m "Build artifacts for version ${{ steps.update_version.outputs.new_version }}"
+          git commit -m "Build artifacts for version ${{ env.VERSION }}"
 
       - name: Set up authentication
         run: |
@@ -95,7 +102,7 @@ jobs:
       - name: Upload Plugin Files
         uses: actions/upload-artifact@v4.4.3
         with:
-          name: insta-toc-${{ steps.update_version.outputs.new_version }}
+          name: insta-toc-${{ env.VERSION }}
           path: |
             manifest.json
             main.js
