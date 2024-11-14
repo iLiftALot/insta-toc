@@ -96,10 +96,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.1.0
         with:
-          tag_name: "{{ env.VERSION }}"
-          name: "{{ env.VERSION }}"
+          tag_name: "${{ env.VERSION }}"
+          name: "${{ env.VERSION }}"
           body: |
-            Automated release of version {{ env.VERSION }}.
+            Automated release of version ${{ env.VERSION }}.
 
       - name: Upload Plugin Files
         uses: actions/upload-artifact@v4.4.3
