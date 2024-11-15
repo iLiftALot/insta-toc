@@ -6,8 +6,8 @@ const manifestPath = 'manifest.json';
 const versionsPath = 'versions.json';
 
 const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
-const manifestJson = JSON.parse(readFileSync(manifestPath, 'utf8'));
-const versionsJson = JSON.parse(readFileSync(versionsPath, 'utf8'));
+const manifestJson = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+const versionsJson = JSON.parse(readFileSync(versionsPath, 'utf-8'));
 
 const newVersion = packageJson.version;
 const minAppVersion = manifestJson.minAppVersion;
