@@ -14,7 +14,7 @@
         "dev": "node esbuild.config.mjs && terser -o dist/dev/main.js dist/dev/main.js",
         "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && terser -o dist/build/main.js dist/build/main.js",
         "bump-version": "node version-bump.mjs",
-        "upload": "npm version patch -m \"Automated bump to %s\" && npm run bump-version && npm run build && git add . && git stash && git pull origin development --rebase && git stash pop && git commit -m \"Update for version $(node -p \\\"require('./package.json').version\\\")\" && git push origin development --follow-tags"
+        "upload": "npm version patch -m \"Automated bump to %s\" && npm run bump-version && npm run build && git add . && git commit -m \"Update for version $(node -p \\\"require('./package.json').version\\\")\" && git push origin development --follow-tags"
     },
     "keywords": [
         "obsidian",
