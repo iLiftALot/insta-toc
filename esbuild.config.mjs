@@ -36,6 +36,7 @@ const manifestJson = JSON.parse(readFileSync(manifestJsonPath, 'utf-8'));
 if (!existsSync(`${__dirname}/data.json`)) {
 	writeFileSync(`${__dirname}/data.json`, "{}", 'utf-8');
 }
+
 const dataJsonPath = path.join(__dirname, 'data.json');
 const dataJson = JSON.parse(readFileSync(dataJsonPath, 'utf-8'));
 
@@ -135,7 +136,8 @@ const context = await esbuild.context({
 		"@lezer/common",
 		"@lezer/highlight",
 		"@lezer/lr",
-		...builtins],
+		...builtins
+	],
 	define: {
 		"Process.env": JSON.stringify(parsedEnv),
 	},
@@ -154,7 +156,6 @@ const context = await esbuild.context({
 
 function copyMainJs() {
 	try {
-		// Copy the file instead of creating a symlink
 		copyFileSync(sourcePath, targetPath);
 		logs.push(`Copied file: ${sourcePath} -> ${targetPath}`);
 

@@ -3,9 +3,12 @@ name: Release and Publish
 on:
   push:
     tags:
-      - 'v*'
+      - '[0-9]+.[0-9]+.[0-9]+'
     branches:
-      - 'master'
+      - 'development'
+  pull_request:
+    branches:
+      - development
   workflow_dispatch:
     inputs:
       version_type:
@@ -27,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -37,6 +40,9 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Remove Tag Prefix
+        run: npm config set tag-version-prefix ""
+
       - name: Configure Git
         run: |
           git config user.name "GitHub Actions"
@@ -45,21 +51,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Update Version
-        id: update_version
+      - name: Get Version
+        id: get_version
         run: |
-          npm version ${{ github.event.inputs.version_type || 'patch' }} -m "Automated bump to %s"
-          new_version=$(node -p "require('./package.json').version")
-          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Run Version Bump Script
-        run: npm run bump-version
+      #- name: Update Version
+      #  id: update_version
+      #  run: |
+      #    npm version {{ github.event.inputs.version_type || 'patch' }} -m "Automated bump to %s"
+      #    new_version=$(node -p "require('./package.json').version")
+      #    echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
-      - name: Commit Version Bump Changes
-        run: |
-          git add .
-          git commit -m "Update manifest and versions to ${{
-            steps.update_version.outputs.new_version }}"
+      #- name: Run Version Bump Script
+      #  run: npm run bump-version
+
+      #- name: Commit Version Bump Changes
+      #  run: |
+      #    git add .
+      #    git commit -m "Update manifest and versions to s{{ steps.update_version.outputs.new_version }}"
 
       - name: Build Project
         run: npm run build
@@ -67,7 +78,7 @@ jobs:
       - name: Commit Build Artifacts
         run: |
           git add .
-          git commit -m "Build artifacts for version ${{ steps.update_version.outputs.new_version }}"
+          git commit -m "Build artifacts for version ${{ env.VERSION }}"
 
       - name: Set up authentication
         run: |
@@ -75,25 +86,25 @@ jobs:
 
       - name: Push Changes
         run: |
-          git push origin HEAD --follow-tags
+          git push origin development --follow-tags
 
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+      #- name: Publish to npm
+      #  env:
+      #    NODE_AUTH_TOKEN: {{ secrets.NPM_TOKEN }}
+      #  run: npm publish
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.1.0
         with:
-          tag_name: "${{ steps.update_version.outputs.new_version }}"
-          name: "${{ steps.update_version.outputs.new_version }}"
+          tag_name: "${{ env.VERSION }}"
+          name: "${{ env.VERSION }}"
           body: |
-            Automated release of version v${{ steps.update_version.outputs.new_version }}.
+            Automated release of version ${{ env.VERSION }}.
 
       - name: Upload Plugin Files
         uses: actions/upload-artifact@v4.4.3
         with:
-          name: insta-toc-${{ steps.update_version.outputs.new_version }}
+          name: insta-toc-${{ env.VERSION }}
           path: |
             manifest.json
             main.js

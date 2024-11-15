@@ -24,15 +24,5 @@ export class SettingTab extends PluginSettingTab {
                     this.plugin.settings.tocString = value;
                     await this.plugin.saveSettings();
                 }));
-        new Setting(containerEl)
-            .setName('TOC Files')
-            .setDesc('Insert files to automatically ')
-            .addText(text => text
-                .setPlaceholder('Enter your secret')
-                .setValue(this.plugin.settings.tocString)
-                .onChange(async (value) => {
-                    this.plugin.settings.tocString = value;
-                    await this.plugin.saveSettings();
-                }));
     }
 }

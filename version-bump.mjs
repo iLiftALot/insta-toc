@@ -1,14 +1,25 @@
 import { readFileSync, writeFileSync } from "fs";
 
-const targetVersion = process.env.npm_package_version;
+// Define paths to the files to update
+const packagePath = 'package.json';
+const manifestPath = 'manifest.json';
+const versionsPath = 'versions.json';
 
-// read minAppVersion from manifest.json and bump version to target version
-let manifest = JSON.parse(readFileSync("manifest.json", "utf8"));
-const { minAppVersion } = manifest;
-manifest.version = targetVersion;
-writeFileSync("manifest.json", JSON.stringify(manifest, null, "\t"));
+const packageJson = JSON.parse(readFileSync(packagePath, 'utf-8'));
+const manifestJson = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+const versionsJson = JSON.parse(readFileSync(versionsPath, 'utf-8'));
 
-// update versions.json with target version and minAppVersion from manifest.json
-let versions = JSON.parse(readFileSync("versions.json", "utf8"));
-versions[targetVersion] = minAppVersion;
-writeFileSync("versions.json", JSON.stringify(versions, null, "\t"));
+const newVersion = packageJson.version;
+const minAppVersion = manifestJson.minAppVersion;
+
+console.log(`New Version: ${newVersion}\nMinimum App Version: ${minAppVersion}\n`);
+
+manifestJson.version = newVersion;
+writeFileSync(manifestPath, JSON.stringify(manifestJson, null, 4));
+
+console.log(`Changed manifest.json version to ${manifestJson.version}\n`);
+
+versionsJson[newVersion] = minAppVersion;
+writeFileSync(versionsPath, JSON.stringify(versionsJson, null, 4));
+
+console.log(`Added "${newVersion}: ${minAppVersion}" versions.json:\n${JSON.stringify(versionsJson, null, 4)}`);
