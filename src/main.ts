@@ -33,7 +33,7 @@ export default class InstaTocPlugin extends Plugin {
 		console.log('Loading Insta TOC Plugin');
 
 		await this.loadSettings();
-		this.addSettingTab(new SettingTab(this.app, this));
+		//this.addSettingTab(new SettingTab(this.app, this));
 
 		// Custom codeblock processor for the insta-toc codeblock
 		this.registerMarkdownCodeBlockProcessor(
