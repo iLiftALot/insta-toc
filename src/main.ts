@@ -29,7 +29,7 @@ export default class InstaTocPlugin extends Plugin {
 		this.app = app;
 	}
 
-	async onload() {
+	async onload(): Promise<void> {
 		console.log('Loading Insta TOC Plugin');
 
 		await this.loadSettings();
@@ -42,7 +42,7 @@ export default class InstaTocPlugin extends Plugin {
 				const pathWithFileExtension: string = ctx.sourcePath; // Includes .md
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 
-				const listRegex = /^(\s*)-\s*(.*)/; // Regex to match leading spaces/tabs, bullet, and content
+				const listRegex: RegExp = /^(\s*)-\s*(.*)/; // Regex to match leading spaces/tabs, bullet, and content
 				const lines: string[] = source.split('\n'); // insta-toc codeblock content
 
 				// Process the codeblock text by converting each line into a markdown link list item
@@ -71,11 +71,11 @@ export default class InstaTocPlugin extends Plugin {
 		);
 	}
 
-	onunload() {
+	onunload(): void {
 		console.log('Unloading Insta TOC Plugin');
 	}
 
-	async loadSettings() {
+	async loadSettings(): Promise<void> {
 		let mergedSettings = DEFAULT_SETTINGS;
 		const settingsData = await this.loadData();
 		if (settingsData) {
@@ -84,7 +84,7 @@ export default class InstaTocPlugin extends Plugin {
 		this.settings = mergedSettings;
 	}
 
-	async saveSettings() {
+	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 	}
 
@@ -152,6 +152,6 @@ export default class InstaTocPlugin extends Plugin {
 		if (!activeEditor || !editor || !file) return;
 
 		// Dynamically update the insta-toc codeblock
-		if (editor) this.updateAutoToc(editor, file);
+		this.updateAutoToc(editor, file);
 	}
 }
