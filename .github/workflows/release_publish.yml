@@ -60,11 +60,11 @@ jobs:
       #- name: Commit Build Artifacts
       #  run: |
       #    git add .
-      #    git commit -m "Build artifacts for version ${{ env.VERSION }}"
+      #    git commit -m "Build artifacts for version {{ env.VERSION }}"
 
       #- name: Set up authentication
       #  run: |
-      #    git remote set-url origin https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git
+      #    git remote set-url origin https://x-access-token:{{ secrets.REPO_TOKEN }}@github.com/{{ github.repository }}.git
 
       #- name: Push Changes
       #  run: |
