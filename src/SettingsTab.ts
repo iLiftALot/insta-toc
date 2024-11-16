@@ -60,6 +60,7 @@ export class SettingTab extends PluginSettingTab {
                     .onChange(async (value: UpdateDelay) => {
                         this.plugin.settings.updateDelay = value;
                         await this.plugin.saveSettings();
+                        this.plugin.updateModifyEventListener();
                     })
             })
     }

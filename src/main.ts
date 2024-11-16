@@ -1,6 +1,7 @@
 import {
 	App,
 	Editor,
+	EventRef,
 	MarkdownFileInfo,
 	MarkdownPostProcessorContext,
 	MarkdownRenderer,
@@ -18,6 +19,7 @@ import { ManageToc } from './ManageToc';
 export default class InstaTocPlugin extends Plugin {
 	public app: App;
 	public settings: InstaTocSettings;
+	private modifyEventRef: EventRef | null = null;
 
 	constructor(app: App, manifest?: PluginManifest) {
 		const mainManifest = manifest ?? Process.env.pluginManifest;
@@ -98,12 +100,7 @@ export default class InstaTocPlugin extends Plugin {
 		);
 
 		// Detect when the user types and update headers
-		this.registerEvent(
-			this.app.vault.on(
-				"modify",
-				debounce(this.handleEditorChange.bind(this), this.settings.updateDelay)
-			)
-		);
+		this.updateModifyEventListener()
 	}
 
 	onunload(): void {
@@ -121,6 +118,21 @@ export default class InstaTocPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+	}
+
+	public updateModifyEventListener(): void {
+		if (this.modifyEventRef) {
+			// Unregister the previous event listener
+			this.app.vault.offref(this.modifyEventRef);
+		}
+
+		// Register the new event listener with the updated debounce delay
+		this.modifyEventRef = this.app.vault.on(
+			"modify",
+			debounce(this.handleEditorChange.bind(this), this.settings.updateDelay)
+		);
+
+		this.registerEvent(this.modifyEventRef);
 	}
 
 	// Main control method to handle all active file changes
