@@ -49,9 +49,9 @@ export default class InstaTocPlugin extends Plugin {
 					if (!match) return line;
 
 					const [, indent, bullet, contentText]: RegExpMatchArray = match;
-					const navLink = `${filePath}#${contentText}`; // Encode the heading for URL
+					const navLink = `${filePath}#${contentText}`;
 
-					const headingLevel = Math.floor(indent.length / 4) + 1;
+					const headingLevel: number = Math.floor(indent.length / 4) + 1;
 					headingLevels.push(headingLevel);
 
 					return `${indent}${bullet} [[${navLink}|${contentText}]]`;
