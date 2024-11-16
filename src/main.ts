@@ -8,7 +8,7 @@ import {
 	PluginManifest,
 	TFile
 } from 'obsidian';
-import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
+import { InstaTocSettings, DEFAULT_SETTINGS, IndentLevel } from './Settings';
 import { SettingTab } from './SettingsTab';
 import { deepmerge } from 'deepmerge-ts';
 import { debounce } from 'Utility';
@@ -60,15 +60,38 @@ export default class InstaTocPlugin extends Plugin {
 				// Now render the markdown
 				await MarkdownRenderer.render(this.app, processedSource, el, pathWithFileExtension, this);
 
-				// Customize Indentation
-				const indentSize = this.settings.indentSize;
-				const listItems = el.querySelectorAll('li');
+				// Configure indentation once rendered
+				const indentSize: IndentLevel = this.settings.indentSize;
+				const listItems: NodeListOf<HTMLLIElement> = el.querySelectorAll('li');
+				
 				listItems.forEach((listItem: HTMLLIElement, index: number) => {
-					const headingLevel = headingLevels[index];
+					const headingLevel: number = headingLevels[index];
 
 					// Only adjust indentation for headings beyond H1 (headingLevel > 1)
 					if (headingLevel > 1) {
-						listItem.style.marginLeft = `${indentSize * 10}px`;
+						listItem.style.marginInlineStart = `${indentSize * 10}px`;
+					}
+					
+					const subList: HTMLUListElement | HTMLOListElement | null = listItem.querySelector('ul, ol');
+					if (subList) {
+						// List item has children
+						const toggleButton: HTMLButtonElement = document.createElement('button');
+						toggleButton.textContent = '▾'; // Down arrow
+						toggleButton.classList.add('fold-toggle');
+
+						// Event listener to toggle visibility
+						toggleButton.addEventListener('click', () => {
+							if (subList.style.display === 'none') {
+								subList.style.display = '';
+								toggleButton.textContent = '▾'; // Down arrow
+							} else {
+								subList.style.display = 'none';
+								toggleButton.textContent = '▸'; // Right arrow
+							}
+						});
+
+						// Insert the toggle button
+						listItem.prepend(toggleButton);
 					}
 				});
 			}

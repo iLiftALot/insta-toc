@@ -1,8 +1,14 @@
-/*
+.fold-toggle {
+    margin-right: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    width: 16px;
+    height: 20px;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
+.fold-toggle:focus {
+    outline: none;
+}
