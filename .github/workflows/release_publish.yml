@@ -82,12 +82,16 @@ jobs:
           name: "${{ env.VERSION }}"
           body: |
             Automated release of version ${{ env.VERSION }}.
+          files: |
+            manifest.json
+            main.js
+            styles.css
 
       - name: Upload Plugin Files
         uses: actions/upload-artifact@v4.4.3
         with:
           name: insta-toc-${{ env.VERSION }}
           path: |
-            ../../manifest.json
-            ../../main.js
-            ../../styles.css
+            manifest.json
+            main.js
+            styles.css
