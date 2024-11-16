@@ -5,7 +5,7 @@
     "repository": {
         "directory": ".",
         "type": "git",
-        "url": "https://github.com/iLiftALot/insta-toc.git"
+        "url": "git+https://github.com/iLiftALot/insta-toc.git"
     },
     "homepage": "https://github.com/iLiftALot/insta-toc#readme",
     "main": "dist/build/main.js",
