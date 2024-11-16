@@ -57,10 +57,10 @@ jobs:
       - name: Build Project
         run: npm run build
 
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+      #- name: Publish to npm
+      #  env:
+      #    NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      #  run: npm publish
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.1.0
