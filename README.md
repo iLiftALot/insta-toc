@@ -1,4 +1,4 @@
-# Insta-Toc Plugin Beta
+# Insta-Toc Plugin
 A plugin to dyamically generate a table of contents while you are writing.
 
 ## Demo
@@ -17,3 +17,4 @@ A plugin to dyamically generate a table of contents while you are writing.
   - [ ] TBD
 - [ ] Add preferences for customized TOC appearance
   - [ ] TBD
+- [ ] Add folding abilities
