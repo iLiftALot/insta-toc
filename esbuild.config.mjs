@@ -42,6 +42,7 @@ const dataJson = JSON.parse(readFileSync(dataJsonPath, 'utf-8'));
 
 // Retrieve the name of the package
 const packageName = packageJson.name;
+const packageVersion = packageJson.version;
 const packageMain = prod ? "dist/build/main.js" : "dist/dev/main.js";
 packageJson.main = packageMain;
 writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 4), 'utf-8');
@@ -100,6 +101,7 @@ if (envFilePath) {
 		parsedEnv["pluginManifest"] = manifestJson;
 		parsedEnv["pluginSettingsPath"] = dataJsonPath;
 		parsedEnv["pluginSettings"] = dataJson;
+		parsedEnv["pluginVersion"] = packageVersion;
 		parsedEnv["projectRoot"] = projectRoot;
 		parsedEnv["vaultRoot"] = vaultRoot;
 		parsedEnv["vaultName"] = vaultName;

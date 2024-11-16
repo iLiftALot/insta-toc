@@ -7,10 +7,8 @@ declare module "Process" {
                 [key: string]: T | undefined;
             }
 
-            interface TempSettings {
-                nextUpdateTime: string;
-                apiKey: string;
-                updateInterval: number;
+            interface PluginSettings extends Dict<any> {
+                [key: string]: any;
             }
 
             interface ProcessEnv extends Dict<string> {
@@ -19,8 +17,9 @@ declare module "Process" {
                 projectRoot: string;
                 vaultRoot: string;
                 pluginManifest: PluginManifest;
+                pluginSettings: PluginSettings;
+                pluginVersion: string;
                 vaultName: string;
-                pluginSettings: TempSettings;
             }
 
             interface Process {

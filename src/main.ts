@@ -26,7 +26,7 @@ export default class InstaTocPlugin extends Plugin {
 	}
 
 	async onload(): Promise<void> {
-		console.log('Loading Insta TOC Plugin');
+		console.log(`Loading Insta TOC Plugin ${Process.env.pluginVersion}`);
 
 		await this.loadSettings();
 		this.addSettingTab(new SettingTab(this.app, this));
@@ -107,7 +107,7 @@ export default class InstaTocPlugin extends Plugin {
 	}
 
 	onunload(): void {
-		console.log('Unloading Insta TOC Plugin');
+		console.log(`Unloading Insta TOC Plugin ${Process.env.pluginVersion}`);
 	}
 
 	async loadSettings(): Promise<void> {
