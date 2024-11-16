@@ -101,7 +101,7 @@ export default class InstaTocPlugin extends Plugin {
 		this.registerEvent(
 			this.app.vault.on(
 				"modify",
-				debounce(this.handleEditorChange.bind(this), 2000)
+				debounce(this.handleEditorChange.bind(this), this.settings.updateDelay)
 			)
 		);
 	}

@@ -1,6 +1,6 @@
 import { App, DropdownComponent, PluginSettingTab, Setting, SliderComponent } from 'obsidian';
 import InstaToc from './main';
-import { BulletType, IndentLevel } from './Settings';
+import { BulletType, IndentLevel, UpdateDelay } from './Settings';
 
 const BulletTypes = {
     dash: 'dash',
@@ -47,5 +47,20 @@ export class SettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             )
+
+        new Setting(containerEl)
+            .setName('Update Delay')
+            .setDesc('The delay for each TOC update.')
+            .addSlider((component: SliderComponent) => {
+                component
+                    .setLimits(500, 10000, 500)
+                    .setDynamicTooltip()
+                    .setInstant(true)
+                    .setValue(this.plugin.settings.updateDelay)
+                    .onChange(async (value: UpdateDelay) => {
+                        this.plugin.settings.updateDelay = value;
+                        await this.plugin.saveSettings();
+                    })
+            })
     }
 }
