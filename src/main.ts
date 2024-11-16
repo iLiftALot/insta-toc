@@ -60,6 +60,7 @@ export default class InstaTocPlugin extends Plugin {
 				// Now render the markdown
 				await MarkdownRenderer.render(this.app, processedSource, el, pathWithFileExtension, this);
 
+				// Customize Indentation
 				const indentSize = this.settings.indentSize;
 				const listItems = el.querySelectorAll('li');
 				listItems.forEach((listItem: HTMLLIElement, index: number) => {

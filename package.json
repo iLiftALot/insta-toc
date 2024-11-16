@@ -14,9 +14,9 @@
         "dev": "node esbuild.config.mjs && terser -o dist/dev/main.js dist/dev/main.js",
         "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && terser -o dist/build/main.js dist/build/main.js",
         "bump-version": "node version-bump.mjs",
-        "upload:patch": "npm version patch -m \"Automated bump to %s\" && npm run bump-version && npm run build && git add . && VERSION=$(node -p \"require('./package.json').version\") && git commit -m \"Update for version $VERSION\" && git push origin master --follow-tags",
-        "upload:minor": "npm version minor -m \"Automated bump to %s\" && npm run bump-version && npm run build && git add . && VERSION=$(node -p \"require('./package.json').version\") && git commit -m \"Update for version $VERSION\" && git push origin master --follow-tags",
-        "upload:major": "npm version major -m \"Automated bump to %s\" && npm run bump-version && npm run build && git add . && VERSION=$(node -p \"require('./package.json').version\") && git commit -m \"Update for version $VERSION\" && git push origin master --follow-tags"
+        "upload:patch": "npm version patch -m \"Automated bump to %s\" && npm run bump-version && npm run build && git add . && VERSION=$(node -p \"require('./package.json').version\") && git commit -m \"Update for version $VERSION\" && git push origin --follow-tags",
+        "upload:minor": "npm version minor -m \"Automated bump to %s\" && npm run bump-version && npm run build && git add . && VERSION=$(node -p \"require('./package.json').version\") && git commit -m \"Update for version $VERSION\" && git push origin --follow-tags",
+        "upload:major": "npm version major -m \"Automated bump to %s\" && npm run bump-version && npm run build && git add . && VERSION=$(node -p \"require('./package.json').version\") && git commit -m \"Update for version $VERSION\" && git push origin --follow-tags"
     },
     "keywords": [
         "obsidian",
