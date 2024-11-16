@@ -123,10 +123,19 @@ export class ManageToc {
 
         // Get the insertion position and generate the updated TOC
         const tocInsertRange: EditorRange = this.getTocInsertPosition(instaTocSection);
-        const listTypeIsDash: boolean = this.plugin.settings.bulletType === 'dash';
-        const newTocBlock: string = listTypeIsDash
-            ? this.generateNormalToc(fileHeadings)
-            : this.generateNumberedToc(fileHeadings);
+        
+        let newTocBlock: string;
+        switch(this.plugin.settings.bulletType) {
+            case "dash":
+                newTocBlock = this.generateNormalToc(fileHeadings);
+                break;
+            case "number":
+                newTocBlock = this.generateNumberedToc(fileHeadings);
+                break;
+            default:
+                newTocBlock = this.generateNormalToc(fileHeadings);
+                break;
+        }
 
         // Replace the old TOC with the updated TOC
         this.editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
