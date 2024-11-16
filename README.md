@@ -14,7 +14,8 @@ A plugin to dyamically generate a table of contents while you are writing.
   - [x] Bullet types
     - [x] Number
     - [x] Dash
+    - [ ] TBD
   - [ ] TBD
 - [ ] Add preferences for customized TOC appearance
   - [ ] TBD
-- [ ] Add folding abilities
+- [x] Add folding abilities
