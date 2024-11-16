@@ -47,8 +47,41 @@ export class ManageToc {
         return { from: tocStartPos, to: tocEndPos };
     }
 
+    private generateNumberedToc(fileHeadings: HeadingCache[]): string {
+        const tocHeadingRefs: string[] = [];
+        const levelNumbers: { [level: number]: number } = {};
+
+        for (const headingCache of fileHeadings) {
+            const headingLevel = headingCache.level;
+            const headingText = headingCache.heading;
+
+            // Reset numbering for deeper levels
+            for (let level = headingLevel + 1; level <= 6; level++) {
+                levelNumbers[level] = 0;
+            }
+
+            // Initialize numbering for this level if not already
+            if (!levelNumbers[headingLevel]) {
+                levelNumbers[headingLevel] = 0;
+            }
+
+            // Increment the numbering at the current level
+            levelNumbers[headingLevel]++;
+
+            const bullet = levelNumbers[headingLevel].toString();
+
+            const indent = ' '.repeat((headingLevel - 1) * 4);
+            const tocHeadingRef = `${indent}${bullet}. ${headingText}`;
+
+            tocHeadingRefs.push(tocHeadingRef);
+        }
+
+        const tocContent: string = tocHeadingRefs.join('\n');
+        return `\`\`\`${instaTocCodeBlockId}\n${tocContent}\n\`\`\``;
+    }
+
     // Generates a new insta-toc codeblock
-    private generateToc(fileHeadings: HeadingCache[]): string {
+    private generateNormalToc(fileHeadings: HeadingCache[]): string {
         const tocHeadingRefs: string[] = [];
 
         // Iterate each heading cache object to generate the new TOC content
@@ -56,7 +89,9 @@ export class ManageToc {
             fileHeadings.forEach((headingCache: HeadingCache) => {
                 const headingLevel: number = headingCache.level;
                 const headingText: string = headingCache.heading;
-                const tocHeadingRef = `${' '.repeat((headingLevel - 1) * 4)}- ${headingText}`;
+
+                const indent: string = ' '.repeat((headingLevel - 1) * 4);
+                const tocHeadingRef = `${indent}- ${headingText}`;
 
                 tocHeadingRefs.push(tocHeadingRef);
             });
@@ -88,7 +123,10 @@ export class ManageToc {
 
         // Get the insertion position and generate the updated TOC
         const tocInsertRange: EditorRange = this.getTocInsertPosition(instaTocSection);
-        const newTocBlock: string = this.generateToc(fileHeadings);
+        const listTypeIsDash: boolean = this.plugin.settings.bulletType === 'dash';
+        const newTocBlock: string = listTypeIsDash
+            ? this.generateNormalToc(fileHeadings)
+            : this.generateNumberedToc(fileHeadings);
 
         // Replace the old TOC with the updated TOC
         this.editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
