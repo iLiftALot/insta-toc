@@ -57,18 +57,18 @@ jobs:
       - name: Build Project
         run: npm run build
 
-      - name: Commit Build Artifacts
-        run: |
-          git add .
-          git commit -m "Build artifacts for version ${{ env.VERSION }}"
+      #- name: Commit Build Artifacts
+      #  run: |
+      #    git add .
+      #    git commit -m "Build artifacts for version ${{ env.VERSION }}"
 
-      - name: Set up authentication
-        run: |
-          git remote set-url origin https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git
+      #- name: Set up authentication
+      #  run: |
+      #    git remote set-url origin https://x-access-token:${{ secrets.REPO_TOKEN }}@github.com/${{ github.repository }}.git
 
-      - name: Push Changes
-        run: |
-          git push origin --follow-tags
+      #- name: Push Changes
+      #  run: |
+      #    git push origin --follow-tags
 
       - name: Publish to npm
         env:
