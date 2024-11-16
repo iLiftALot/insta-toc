@@ -1,16 +1,11 @@
 import {
 	App,
-	CachedMetadata,
 	Editor,
-	EditorPosition,
-	EditorRange,
-	HeadingCache,
 	MarkdownFileInfo,
 	MarkdownPostProcessorContext,
 	MarkdownRenderer,
 	Plugin,
 	PluginManifest,
-	SectionCache,
 	TFile
 } from 'obsidian';
 import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
@@ -34,7 +29,7 @@ export default class InstaTocPlugin extends Plugin {
 		console.log('Loading Insta TOC Plugin');
 
 		await this.loadSettings();
-		//this.addSettingTab(new SettingTab(this.app, this));
+		this.addSettingTab(new SettingTab(this.app, this));
 
 		// Custom codeblock processor for the insta-toc codeblock
 		this.registerMarkdownCodeBlockProcessor(
@@ -43,23 +38,38 @@ export default class InstaTocPlugin extends Plugin {
 				const pathWithFileExtension: string = ctx.sourcePath; // Includes .md
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 
-				const listRegex: RegExp = /^(\s*)-\s*(.*)/; // Regex to match leading spaces/tabs, bullet, and content
-				const lines: string[] = source.split('\n'); // insta-toc codeblock content
+				const listRegex: RegExp = /^(\s*)(-|\d+(?:\.\d+)*|\d\.)\s+(.*)/; // Matches indent, bullet, and content
+				const lines: string[] = source.split('\n'); // TOC codeblock content
+				const headingLevels: number[] = []; // To store heading levels corresponding to each line
 
 				// Process the codeblock text by converting each line into a markdown link list item
 				const processedSource: string = lines.map((line) => {
 					const match: RegExpMatchArray | null = line.match(listRegex);
+					
 					if (!match) return line;
 
-					const [, indent, contentText]: RegExpMatchArray = match;
-					const navLink = `${filePath}#${contentText}`;
+					const [, indent, bullet, contentText]: RegExpMatchArray = match;
+					const navLink = `${filePath}#${contentText}`; // Encode the heading for URL
 
-					return `${indent}- [[${navLink}|${contentText}]]`;
-				})
-					.join('\n');
+					const headingLevel = Math.floor(indent.length / 4) + 1;
+					headingLevels.push(headingLevel);
+
+					return `${indent}${bullet} [[${navLink}|${contentText}]]`;
+				}).join('\n');
 
 				// Now render the markdown
 				await MarkdownRenderer.render(this.app, processedSource, el, pathWithFileExtension, this);
+
+				const indentSize = this.settings.indentSize;
+				const listItems = el.querySelectorAll('li');
+				listItems.forEach((listItem: HTMLLIElement, index: number) => {
+					const headingLevel = headingLevels[index];
+
+					// Only adjust indentation for headings beyond H1 (headingLevel > 1)
+					if (headingLevel > 1) {
+						listItem.style.marginLeft = `${indentSize * 10}px`;
+					}
+				});
 			}
 		);
 
@@ -77,8 +87,8 @@ export default class InstaTocPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		let mergedSettings = DEFAULT_SETTINGS;
-		const settingsData = await this.loadData();
+		let mergedSettings: InstaTocSettings = DEFAULT_SETTINGS;
+		const settingsData: InstaTocSettings = await this.loadData();
 		if (settingsData) {
 			mergedSettings = deepmerge(DEFAULT_SETTINGS, settingsData);
 		}
