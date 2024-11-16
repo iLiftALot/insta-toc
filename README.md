@@ -6,5 +6,14 @@ A plugin to dyamically generate a table of contents while you are writing.
 
 ## Road Map
 - [ ] Implement logic to handle various heading formats
+  - [ ] Markdown Links
+  - [ ] Wiki-Links
+  - [ ] TBD
 - [ ] Configure Settings Tab
+  - [x] Indentation
+  - [x] Bullet types
+    - [x] Number
+    - [x] Dash
+  - [ ] TBD
 - [ ] Add preferences for customized TOC appearance
+  - [ ] TBD
