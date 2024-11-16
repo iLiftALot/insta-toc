@@ -1,5 +1,11 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, DropdownComponent, PluginSettingTab, Setting, SliderComponent } from 'obsidian';
 import InstaToc from './main';
+import { BulletType } from './Settings';
+
+const BulletTypes = {
+    dash: 'dash',
+    number: 'number',
+}
 
 export class SettingTab extends PluginSettingTab {
     plugin: InstaToc;
@@ -15,14 +21,31 @@ export class SettingTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName('Setting #1')
-            .setDesc('It\'s a secret')
-            .addText(text => text
-                .setPlaceholder('Enter your secret')
-                .setValue(this.plugin.settings.tocString)
-                .onChange(async (value) => {
-                    this.plugin.settings.tocString = value;
-                    await this.plugin.saveSettings();
-                }));
+            .setName('List Bullet Type')
+            .setDesc('Select the list bullet type.')
+            .addDropdown((component: DropdownComponent) => 
+                component
+                    .addOptions(BulletTypes)
+                    .setValue(this.plugin.settings.bulletType)
+                    .onChange(async (value: BulletType) => {
+                        this.plugin.settings.bulletType = value;
+                        await this.plugin.saveSettings();
+                    })
+        )
+
+        new Setting(containerEl)
+            .setName('Indent Size')
+            .setDesc('Select the indentation size.')
+            .addSlider((component: SliderComponent) =>
+                component
+                    .setLimits(2, 8, 2)
+                    .setDynamicTooltip()
+                    .setInstant(true)
+                    .setValue(this.plugin.settings.indentSize)
+                    .onChange(async (value: number) => {
+                        this.plugin.settings.indentSize = value;
+                        await this.plugin.saveSettings();
+                    })
+            )
     }
 }

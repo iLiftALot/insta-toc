@@ -1,9 +1,11 @@
+export type BulletType = 'dash' | 'number';
+
 export interface InstaTocSettings {
-    tocString: string;
-    shouldGenToc: boolean;
+    bulletType: BulletType;
+    indentSize: number;
 }
 
 export const DEFAULT_SETTINGS: InstaTocSettings = {
-    tocString: `> [!SUMMARY] Table of Contents`,
-    shouldGenToc: false
+    bulletType: 'dash',
+    indentSize: 4
 }
