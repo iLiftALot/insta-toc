@@ -68,7 +68,7 @@ jobs:
 
       - name: Push Changes
         run: |
-          git push origin master --follow-tags
+          git push origin --follow-tags
 
       #- name: Publish to npm
       #  env:
