@@ -1,6 +1,6 @@
 import { App, DropdownComponent, PluginSettingTab, Setting, SliderComponent } from 'obsidian';
 import InstaToc from './main';
-import { BulletType } from './Settings';
+import { BulletType, IndentLevel } from './Settings';
 
 const BulletTypes = {
     dash: 'dash',
@@ -42,7 +42,7 @@ export class SettingTab extends PluginSettingTab {
                     .setDynamicTooltip()
                     .setInstant(true)
                     .setValue(this.plugin.settings.indentSize)
-                    .onChange(async (value: number) => {
+                    .onChange(async (value: IndentLevel) => {
                         this.plugin.settings.indentSize = value;
                         await this.plugin.saveSettings();
                     })
