@@ -10,17 +10,17 @@ import {
 	TFile,
 	debounce
 } from 'obsidian';
-import { InstaTocSettings, DEFAULT_SETTINGS, IndentLevel } from './Settings';
+import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
 import { SettingTab } from './SettingsTab';
 import { deepmerge } from 'deepmerge-ts';
 import { ManageToc } from './ManageToc';
+import { configureRenderedIndent, handleCodeblockListItem, listRegex } from './Utils';
 
 
 export default class InstaTocPlugin extends Plugin {
 	public app: App;
 	public settings: InstaTocSettings;
 	private modifyEventRef: EventRef | null = null;
-	private isHandlingChange: boolean = false; // State variable to track if a change is being handled
 
 	constructor(app: App, manifest?: PluginManifest) {
 		const mainManifest = manifest ?? Process.env.pluginManifest;
@@ -40,33 +40,31 @@ export default class InstaTocPlugin extends Plugin {
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> => {
 				const pathWithFileExtension: string = ctx.sourcePath; // Includes .md
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
+				const file: TFile = this.app.vault.getAbstractFileByPath(pathWithFileExtension) as TFile;
 
-				const listRegex: RegExp = /^(\s*)(-|\d+(?:\.\d+)*|\d\.)\s+(.*)/; // Matches indent, bullet, and content
 				const lines: string[] = source.split('\n'); // TOC codeblock content
 				const headingLevels: number[] = []; // To store heading levels corresponding to each line
 
 				// Process the codeblock text by converting each line into a markdown link list item
 				const processedSource: string = lines.map((line) => {
 					const match: RegExpMatchArray | null = line.match(listRegex);
-					
 					if (!match) return line;
 
-					const [, indent, bullet, contentText]: RegExpMatchArray = match;
-					const navLink = `${filePath}#${contentText}`;
+					const { indent, bullet, navLink } = handleCodeblockListItem(this.app, file, match, line, filePath);
 
 					// Calculate heading level based on indentation
 					const indentLevel = Math.floor(indent.length / 4); // Each indent level represents one heading level increment
 					const headingLevel: number = indentLevel + 1; // H1 corresponds to no indentation
 					headingLevels.push(headingLevel);
 
-					return `${indent}${bullet} [[${navLink}|${contentText}]]`;
+					return `${indent}${bullet} ${navLink}`;
 				}).join('\n');
 
 				// Now render the markdown
 				await MarkdownRenderer.render(this.app, processedSource, el, pathWithFileExtension, this);
 
 				// Configure indentation once rendered
-				this.configureRenderedIndent(el, headingLevels);
+				configureRenderedIndent(el, headingLevels, this.settings.indentSize);
 			}
 		);
 
@@ -107,43 +105,6 @@ export default class InstaTocPlugin extends Plugin {
 		);
 
 		this.registerEvent(this.modifyEventRef);
-	}
-
-	// Configure indentation for the insta-toc codeblock element post-render
-	private configureRenderedIndent(el: HTMLElement, headingLevels: number[]) {
-		const indentSize: IndentLevel = this.settings.indentSize;
-		const listItems: NodeListOf<HTMLLIElement> = el.querySelectorAll('li');
-
-		listItems.forEach((listItem: HTMLLIElement, index: number) => {
-			const headingLevel: number = headingLevels[index];
-
-			// Only adjust indentation for headings beyond H1 (headingLevel > 1)
-			if (headingLevel > 1) {
-				listItem.style.marginInlineStart = `${indentSize * 10}px`;
-			}
-
-			const subList: HTMLUListElement | HTMLOListElement | null = listItem.querySelector('ul, ol');
-			if (subList) {
-				// List item has children
-				const toggleButton: HTMLButtonElement = document.createElement('button');
-				toggleButton.textContent = '▾'; // Down arrow
-				toggleButton.classList.add('fold-toggle');
-
-				// Event listener to toggle visibility
-				toggleButton.addEventListener('click', () => {
-					if (subList.style.display === 'none') {
-						subList.style.display = '';
-						toggleButton.textContent = '▾'; // Down arrow
-					} else {
-						subList.style.display = 'none';
-						toggleButton.textContent = '▸'; // Right arrow
-					}
-				});
-
-				// Insert the toggle button
-				listItem.prepend(toggleButton);
-			}
-		});
 	}
 
 	// Handle all active file changes for the insta-toc plaintext content
