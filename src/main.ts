@@ -7,12 +7,12 @@ import {
 	MarkdownRenderer,
 	Plugin,
 	PluginManifest,
-	TFile
+	TFile,
+	debounce
 } from 'obsidian';
 import { InstaTocSettings, DEFAULT_SETTINGS, IndentLevel } from './Settings';
 import { SettingTab } from './SettingsTab';
 import { deepmerge } from 'deepmerge-ts';
-import { debounce } from 'Utility';
 import { ManageToc } from './ManageToc';
 
 
@@ -20,6 +20,7 @@ export default class InstaTocPlugin extends Plugin {
 	public app: App;
 	public settings: InstaTocSettings;
 	private modifyEventRef: EventRef | null = null;
+	private isHandlingChange: boolean = false; // State variable to track if a change is being handled
 
 	constructor(app: App, manifest?: PluginManifest) {
 		const mainManifest = manifest ?? Process.env.pluginManifest;
@@ -65,39 +66,7 @@ export default class InstaTocPlugin extends Plugin {
 				await MarkdownRenderer.render(this.app, processedSource, el, pathWithFileExtension, this);
 
 				// Configure indentation once rendered
-				const indentSize: IndentLevel = this.settings.indentSize;
-				const listItems: NodeListOf<HTMLLIElement> = el.querySelectorAll('li');
-				
-				listItems.forEach((listItem: HTMLLIElement, index: number) => {
-					const headingLevel: number = headingLevels[index];
-
-					// Only adjust indentation for headings beyond H1 (headingLevel > 1)
-					if (headingLevel > 1) {
-						listItem.style.marginInlineStart = `${indentSize * 10}px`;
-					}
-					
-					const subList: HTMLUListElement | HTMLOListElement | null = listItem.querySelector('ul, ol');
-					if (subList) {
-						// List item has children
-						const toggleButton: HTMLButtonElement = document.createElement('button');
-						toggleButton.textContent = '▾'; // Down arrow
-						toggleButton.classList.add('fold-toggle');
-
-						// Event listener to toggle visibility
-						toggleButton.addEventListener('click', () => {
-							if (subList.style.display === 'none') {
-								subList.style.display = '';
-								toggleButton.textContent = '▾'; // Down arrow
-							} else {
-								subList.style.display = 'none';
-								toggleButton.textContent = '▸'; // Right arrow
-							}
-						});
-
-						// Insert the toggle button
-						listItem.prepend(toggleButton);
-					}
-				});
+				this.configureRenderedIndent(el, headingLevels);
 			}
 		);
 
@@ -116,7 +85,7 @@ export default class InstaTocPlugin extends Plugin {
 		if (settingsData) {
 			mergedSettings = deepmerge(DEFAULT_SETTINGS, settingsData);
 		}
-		
+
 		this.settings = mergedSettings;
 	}
 
@@ -124,6 +93,7 @@ export default class InstaTocPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	// Dynamically update the debounce delay for ToC updates
 	public updateModifyEventListener(): void {
 		if (this.modifyEventRef) {
 			// Unregister the previous event listener
@@ -133,13 +103,50 @@ export default class InstaTocPlugin extends Plugin {
 		// Register the new event listener with the updated debounce delay
 		this.modifyEventRef = this.app.vault.on(
 			"modify",
-			debounce(this.handleEditorChange.bind(this), this.settings.updateDelay)
+			debounce(this.handleEditorChange.bind(this), this.settings.updateDelay, true)
 		);
 
 		this.registerEvent(this.modifyEventRef);
 	}
 
-	// Main control method to handle all active file changes
+	// Configure indentation for the insta-toc codeblock element post-render
+	private configureRenderedIndent(el: HTMLElement, headingLevels: number[]) {
+		const indentSize: IndentLevel = this.settings.indentSize;
+		const listItems: NodeListOf<HTMLLIElement> = el.querySelectorAll('li');
+
+		listItems.forEach((listItem: HTMLLIElement, index: number) => {
+			const headingLevel: number = headingLevels[index];
+
+			// Only adjust indentation for headings beyond H1 (headingLevel > 1)
+			if (headingLevel > 1) {
+				listItem.style.marginInlineStart = `${indentSize * 10}px`;
+			}
+
+			const subList: HTMLUListElement | HTMLOListElement | null = listItem.querySelector('ul, ol');
+			if (subList) {
+				// List item has children
+				const toggleButton: HTMLButtonElement = document.createElement('button');
+				toggleButton.textContent = '▾'; // Down arrow
+				toggleButton.classList.add('fold-toggle');
+
+				// Event listener to toggle visibility
+				toggleButton.addEventListener('click', () => {
+					if (subList.style.display === 'none') {
+						subList.style.display = '';
+						toggleButton.textContent = '▾'; // Down arrow
+					} else {
+						subList.style.display = 'none';
+						toggleButton.textContent = '▸'; // Right arrow
+					}
+				});
+
+				// Insert the toggle button
+				listItem.prepend(toggleButton);
+			}
+		});
+	}
+
+	// Handle all active file changes for the insta-toc plaintext content
 	private async handleEditorChange(): Promise<void> {
 		const activeEditor: MarkdownFileInfo | null = this.app.workspace.activeEditor;
 		const editor: Editor | undefined = activeEditor?.editor;
