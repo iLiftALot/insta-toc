@@ -53,7 +53,9 @@ export default class InstaTocPlugin extends Plugin {
 					const [, indent, bullet, contentText]: RegExpMatchArray = match;
 					const navLink = `${filePath}#${contentText}`;
 
-					const headingLevel: number = Math.floor(indent.length / 4) + 1;
+					// Calculate heading level based on indentation
+					const indentLevel = Math.floor(indent.length / 4); // Each indent level represents one heading level increment
+					const headingLevel: number = indentLevel + 1; // H1 corresponds to no indentation
 					headingLevels.push(headingLevel);
 
 					return `${indent}${bullet} [[${navLink}|${contentText}]]`;
@@ -100,7 +102,7 @@ export default class InstaTocPlugin extends Plugin {
 		);
 
 		// Detect when the user types and update headers
-		this.updateModifyEventListener()
+		this.updateModifyEventListener();
 	}
 
 	onunload(): void {
