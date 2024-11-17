@@ -5,9 +5,11 @@ A plugin to dyamically generate a table of contents while you are writing.
 ![./assets/media/assets/media/demonstration.gif](https://raw.githubusercontent.com/iLiftALot/insta-toc/master/assets/media/demonstration.gif)
 
 ## Road Map
+**Feel free to make a request any time**.
+
 - [ ] Implement logic to handle various heading formats
-  - [ ] Markdown Links
-  - [ ] Wiki-Links
+  - [x] Markdown Links
+  - [x] Wiki-Links
   - [ ] TBD
 - [ ] Configure Settings Tab
   - [x] Indentation
@@ -15,7 +17,8 @@ A plugin to dyamically generate a table of contents while you are writing.
     - [x] Number
     - [x] Dash
     - [ ] TBD
+  - [x] Update Delay
   - [ ] TBD
 - [ ] Add preferences for customized TOC appearance
   - [ ] TBD
-- [x] Add folding abilities
+- [x] Add folding capabilities
