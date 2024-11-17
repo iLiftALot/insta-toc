@@ -95,6 +95,7 @@ export class ManageToc {
     private generateNormalToc(fileHeadings: HeadingCache[]): string {
         const tocHeadingRefs: string[] = [];
         let currentIndentLevel = 0; // Track the current indentation level
+        let previousHeadingLevel = 0; // Track the current indentation level
 
         if (fileHeadings.length > 0) {
             // Iterate each heading cache object to generate the new TOC content
@@ -109,7 +110,7 @@ export class ManageToc {
                     currentIndentLevel = currentIndentLevel + 1;
                 } else if (index > 0) {
                     // Adjust the current indentation level based on the heading level
-                    currentIndentLevel = headingLevel - 1;
+                    currentIndentLevel = previousHeadingLevel !== headingLevel ? headingLevel - 1 : currentIndentLevel;
                 }
 
                 // Calculate the indentation based on the current indentation level
