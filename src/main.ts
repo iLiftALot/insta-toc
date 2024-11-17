@@ -112,9 +112,11 @@ export default class InstaTocPlugin extends Plugin {
 	async loadSettings(): Promise<void> {
 		let mergedSettings: InstaTocSettings = DEFAULT_SETTINGS;
 		const settingsData: InstaTocSettings = await this.loadData();
+		
 		if (settingsData) {
 			mergedSettings = deepmerge(DEFAULT_SETTINGS, settingsData);
 		}
+		
 		this.settings = mergedSettings;
 	}
 

@@ -47,11 +47,36 @@ export class ManageToc {
         return { from: tocStartPos, to: tocEndPos };
     }
 
+    // Determine the correct indentation level
+    private getIndentationLevel(
+        index: number,
+        currentIndentLevel: number,
+        currentHeadingLevel: number,
+        previousHeadingLevel: number
+    ): number {
+        if (index === 0) {
+            // For the first heading, set the base level
+            currentIndentLevel = 0;
+        } else if (currentHeadingLevel > previousHeadingLevel) {
+            // Increase indentation if the current heading level is greater than the previous
+            currentIndentLevel++;
+        } else if (currentHeadingLevel < previousHeadingLevel) {
+            // Decrease indentation if the current heading level is less than the previous
+            currentIndentLevel -= (previousHeadingLevel - currentHeadingLevel);
+
+            // Avoid negative numbers and maintain the initial heading indent
+            if (currentIndentLevel < 0) currentIndentLevel = 0;
+        } // If headingLevel === previousHeadingLevel, keep the same indentation
+
+        return currentIndentLevel;
+    }
+
     // Generates a new insta-toc codeblock with number-type bullets
     private generateNumberedToc(fileHeadings: HeadingCache[]): string {
         const tocHeadingRefs: string[] = [];
         const levelNumbers: { [level: number]: number } = {};
-        let currentIndentLevel = 0; // Track the current indentation level
+        let currentIndentLevel = 0;
+        let previousHeadingLevel = 0;
 
         for (const [index, headingCache] of fileHeadings.entries()) {
             const headingLevel = headingCache.level;
@@ -70,15 +95,14 @@ export class ManageToc {
             // Increment the numbering at the current level
             levelNumbers[headingLevel]++;
 
-            // Determine the correct indentation level
-            if ((index !== 0) && (headingLevel - currentIndentLevel >= 2)) {
-                // (index !== 0): Not the first heading
-                // (headingLevel - currentIndentLevel >= 2): Heading level more than 2 from the previous level
-                currentIndentLevel = currentIndentLevel + 1;
-            } else if (index > 0) {
-                // Adjust the current indentation level based on the heading level
-                currentIndentLevel = headingLevel - 1;
-            }
+            currentIndentLevel = this.getIndentationLevel(
+                index,
+                currentIndentLevel,
+                headingLevel,
+                previousHeadingLevel
+            )
+
+            previousHeadingLevel = headingLevel;
 
             const indent = ' '.repeat(currentIndentLevel * 4);
             const bullet = levelNumbers[headingLevel].toString();
@@ -94,8 +118,8 @@ export class ManageToc {
     // Generates a new insta-toc codeblock with normal dash-type bullets
     private generateNormalToc(fileHeadings: HeadingCache[]): string {
         const tocHeadingRefs: string[] = [];
-        let currentIndentLevel = 0; // Track the current indentation level
-        let previousHeadingLevel = 0; // Track the current indentation level
+        let currentIndentLevel = 0;
+        let previousHeadingLevel = 0;
 
         if (fileHeadings.length > 0) {
             // Iterate each heading cache object to generate the new TOC content
@@ -103,15 +127,14 @@ export class ManageToc {
                 const headingLevel: number = headingCache.level;
                 const headingText: string = headingCache.heading;
 
-                // Determine the correct indentation level
-                if ((index !== 0) && (headingLevel - currentIndentLevel >= 2)) {
-                    // (index !== 0): Not the first heading
-                    // (headingLevel - currentIndentLevel >= 2): Heading level more than 2 from the previous level
-                    currentIndentLevel = currentIndentLevel + 1;
-                } else if (index > 0) {
-                    // Adjust the current indentation level based on the heading level
-                    currentIndentLevel = previousHeadingLevel !== headingLevel ? headingLevel - 1 : currentIndentLevel;
-                }
+                currentIndentLevel = this.getIndentationLevel(
+                    index,
+                    currentIndentLevel,
+                    headingLevel,
+                    previousHeadingLevel
+                );
+
+                previousHeadingLevel = headingLevel;
 
                 // Calculate the indentation based on the current indentation level
                 const indent: string = ' '.repeat(currentIndentLevel * 4);
