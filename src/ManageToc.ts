@@ -8,13 +8,8 @@ import {
     SectionCache,
     TFile
 } from 'obsidian';
+import { instaTocCodeBlockId, TocData } from './Utils';
 import InstaTocPlugin from './main';
-
-interface TocData {
-    fileHeadings: HeadingCache[],
-    instaTocSection: SectionCache | undefined
-}
-const instaTocCodeBlockId = 'insta-toc';
 
 export class ManageToc {
     public app: App;
@@ -22,12 +17,14 @@ export class ManageToc {
     public editor: Editor;
     public file: TFile;
     public fileCache: CachedMetadata | null;
+    public headingLevelStack: number[];
 
     constructor(app: App, plugin: InstaTocPlugin, editor: Editor, file: TFile) {
         this.app = app;
         this.plugin = plugin;
         this.editor = editor;
         this.file = file;
+        this.headingLevelStack = [];
         this.fileCache = this.app.metadataCache.getFileCache(file);
 
         if (this.fileCache) this.updateAutoToc();
@@ -48,25 +45,17 @@ export class ManageToc {
     }
 
     // Determine the correct indentation level
-    private getIndentationLevel(
-        index: number,
-        currentIndentLevel: number,
-        currentHeadingLevel: number,
-        previousHeadingLevel: number
-    ): number {
-        if (index === 0) {
-            // For the first heading, set the base level
-            currentIndentLevel = 0;
-        } else if (currentHeadingLevel > previousHeadingLevel) {
-            // Increase indentation if the current heading level is greater than the previous
-            currentIndentLevel++;
-        } else if (currentHeadingLevel < previousHeadingLevel) {
-            // Decrease indentation if the current heading level is less than the previous
-            currentIndentLevel -= (previousHeadingLevel - currentHeadingLevel);
+    private getIndentationLevel(headingLevel: number): number {
+        // Pop from the stack until we find a heading level less than the current
+        while (
+            this.headingLevelStack.length > 0 && // Avoid indentation for the first heading
+            headingLevel <= this.headingLevelStack[this.headingLevelStack.length - 1]
+        ) {
+            this.headingLevelStack.pop();
+        }
+        this.headingLevelStack.push(headingLevel);
 
-            // Avoid negative numbers and maintain the initial heading indent
-            if (currentIndentLevel < 0) currentIndentLevel = 0;
-        } // If headingLevel === previousHeadingLevel, keep the same indentation
+        const currentIndentLevel = this.headingLevelStack.length - 1;
 
         return currentIndentLevel;
     }
@@ -75,37 +64,27 @@ export class ManageToc {
     private generateNumberedToc(fileHeadings: HeadingCache[]): string {
         const tocHeadingRefs: string[] = [];
         const levelNumbers: { [level: number]: number } = {};
-        let currentIndentLevel = 0;
-        let previousHeadingLevel = 0;
 
-        for (const [index, headingCache] of fileHeadings.entries()) {
+        for (const headingCache of fileHeadings) {
             const headingLevel = headingCache.level;
             const headingText = headingCache.heading;
-
-            // Reset numbering for deeper levels
-            for (let level = headingLevel + 1; level <= 6; level++) {
-                levelNumbers[level] = 0;
-            }
+            const currentIndentLevel = this.getIndentationLevel(headingLevel);
 
             // Initialize numbering for this level if not already
-            if (!levelNumbers[headingLevel]) {
-                levelNumbers[headingLevel] = 0;
+            if (!levelNumbers[currentIndentLevel]) {
+                levelNumbers[currentIndentLevel] = 0;
+            }
+
+            // Reset numbering for deeper levels
+            for (let i = currentIndentLevel + 1; i <= 6; i++) {
+                levelNumbers[i] = 0;
             }
 
             // Increment the numbering at the current level
-            levelNumbers[headingLevel]++;
-
-            currentIndentLevel = this.getIndentationLevel(
-                index,
-                currentIndentLevel,
-                headingLevel,
-                previousHeadingLevel
-            )
-
-            previousHeadingLevel = headingLevel;
+            levelNumbers[currentIndentLevel]++;
 
             const indent = ' '.repeat(currentIndentLevel * 4);
-            const bullet = levelNumbers[headingLevel].toString();
+            const bullet = levelNumbers[currentIndentLevel].toString();
             const tocHeadingRef = `${indent}${bullet}. ${headingText}`;
 
             tocHeadingRefs.push(tocHeadingRef);
@@ -118,30 +97,17 @@ export class ManageToc {
     // Generates a new insta-toc codeblock with normal dash-type bullets
     private generateNormalToc(fileHeadings: HeadingCache[]): string {
         const tocHeadingRefs: string[] = [];
-        let currentIndentLevel = 0;
-        let previousHeadingLevel = 0;
 
-        if (fileHeadings.length > 0) {
-            // Iterate each heading cache object to generate the new TOC content
-            fileHeadings.forEach((headingCache: HeadingCache, index: number) => {
-                const headingLevel: number = headingCache.level;
-                const headingText: string = headingCache.heading;
+        for (const headingCache of fileHeadings) {
+            const headingLevel: number = headingCache.level;
+            const headingText: string = headingCache.heading;
+            const currentIndentLevel = this.getIndentationLevel(headingLevel);
 
-                currentIndentLevel = this.getIndentationLevel(
-                    index,
-                    currentIndentLevel,
-                    headingLevel,
-                    previousHeadingLevel
-                );
+            // Calculate the indentation based on the current indentation level
+            const indent: string = ' '.repeat(currentIndentLevel * 4);
+            const tocHeadingRef = `${indent}- ${headingText}`;
 
-                previousHeadingLevel = headingLevel;
-
-                // Calculate the indentation based on the current indentation level
-                const indent: string = ' '.repeat(currentIndentLevel * 4);
-                const tocHeadingRef = `${indent}- ${headingText}`;
-
-                tocHeadingRefs.push(tocHeadingRef);
-            });
+            tocHeadingRefs.push(tocHeadingRef);
         }
 
         const tocContent: string = tocHeadingRefs.join('\n');

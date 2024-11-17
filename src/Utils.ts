@@ -1,5 +1,4 @@
-import { TFile, App } from "obsidian";
-import { IndentLevel } from "./Settings";
+import { TFile, App, HeadingCache, SectionCache } from "obsidian";
 
 // Matches indent, bullet, and content
 export const listRegex: RegExp = /^(\s*)(-|\d+(?:\.\d+)*|\d\.)\s+(.*)/;
@@ -8,6 +7,22 @@ const wikiLinkRegex: RegExp = /\[\[(.*?)\|(.*?)\]\]/;
 // Extracts path/link and alias from headings with regular markdown links
 const markdownLinkRegex: RegExp = /\[(.*?)\]\(.*?\)/;
 
+export const instaTocCodeBlockId = 'insta-toc';
+export const BulletTypes = {
+    dash: 'dash',
+    number: 'number',
+}
+
+export type BulletType = 'dash' | 'number';
+export type IndentLevel = 2 | 4 | 6 | 8;
+export type UpdateDelay = 500 | 1000
+    | 1500 | 2000 | 2500 | 3000 | 3500 | 4000
+    | 4500 | 5000 | 5500 | 6000 | 6500 | 7000
+    | 7500 | 8000 | 8500 | 9000 | 9500 | 10000
+export interface TocData {
+    fileHeadings: HeadingCache[],
+    instaTocSection: SectionCache | undefined
+}
 type ListItemContext = {
     indent: string;
     bullet: string;

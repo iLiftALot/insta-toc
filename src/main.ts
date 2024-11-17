@@ -10,9 +10,9 @@ import {
 	TFile,
 	debounce
 } from 'obsidian';
+import { deepmerge } from 'deepmerge-ts';
 import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
 import { SettingTab } from './SettingsTab';
-import { deepmerge } from 'deepmerge-ts';
 import { ManageToc } from './ManageToc';
 import { configureRenderedIndent, handleCodeblockListItem, listRegex } from './Utils';
 

@@ -1,11 +1,6 @@
 import { App, DropdownComponent, PluginSettingTab, Setting, SliderComponent } from 'obsidian';
+import { BulletType, BulletTypes, IndentLevel, UpdateDelay } from './Utils';
 import InstaToc from './main';
-import { BulletType, IndentLevel, UpdateDelay } from './Settings';
-
-const BulletTypes = {
-    dash: 'dash',
-    number: 'number',
-}
 
 export class SettingTab extends PluginSettingTab {
     plugin: InstaToc;
