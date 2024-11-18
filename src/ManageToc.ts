@@ -8,8 +8,8 @@ import {
     SectionCache,
     TFile
 } from 'obsidian';
-import { instaTocCodeBlockId, TocData } from './Utils';
 import InstaTocPlugin from './main';
+import { instaTocCodeBlockId, TocData } from './constants';
 
 export class ManageToc {
     public app: App;

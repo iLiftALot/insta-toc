@@ -1,58 +1,27 @@
-import { TFile, App, HeadingCache, SectionCache } from "obsidian";
-
-// Matches indent, bullet, and content
-export const listRegex: RegExp = /^(\s*)(-|\d+(?:\.\d+)*|\d\.)\s+(.*)/;
-// Extracts path/link and alias from headings with Obsidian wiki links
-const wikiLinkRegex: RegExp = /\[\[(.*?)\|(.*?)\]\]/;
-// Extracts path/link and alias from headings with regular markdown links
-const markdownLinkRegex: RegExp = /\[(.*?)\]\(.*?\)/;
-
-export const instaTocCodeBlockId = 'insta-toc';
-export const BulletTypes = {
-    dash: 'dash',
-    number: 'number',
-}
-
-export type BulletType = 'dash' | 'number';
-export type IndentLevel = 2 | 4 | 6 | 8;
-export type UpdateDelay = 500 | 1000
-    | 1500 | 2000 | 2500 | 3000 | 3500 | 4000
-    | 4500 | 5000 | 5500 | 6000 | 6500 | 7000
-    | 7500 | 8000 | 8500 | 9000 | 9500 | 10000
-export interface TocData {
-    fileHeadings: HeadingCache[],
-    instaTocSection: SectionCache | undefined
-}
-type ListItemContext = {
-    indent: string;
-    bullet: string;
-    navLink: string;
-}
+import { TFile, App, htmlToMarkdown } from "obsidian";
+import {
+    HandledLink,
+    IndentLevel,
+    ListItemContext,
+    markdownLinkRegex,
+    tagLinkRegex,
+    wikiLinkNoAliasRegex,
+    wikiLinkWithAliasRegex
+} from "./constants";
+import InstaTocPlugin from "./main";
 
 export function handleCodeblockListItem(
     app: App,
+    plugin: InstaTocPlugin,
     file: TFile,
     listItemMatch: RegExpMatchArray,
-    line: string,
     filePath: string
 ): ListItemContext {
-    const headingWikiLink: RegExpMatchArray | null = line.match(wikiLinkRegex);
-    const headingMdLink: RegExpMatchArray | null = line.match(markdownLinkRegex);
-
-    let [, indent, bullet, contentText]: RegExpMatchArray = listItemMatch;
-    let alias: string = contentText;
-
-    if (headingWikiLink) {
-        const [wikiLink, refPath, refAlias] = headingWikiLink;
-
-        contentText = contentText.replace(wikiLink, `${refPath} ${refAlias}`);
-        alias = contentText.replace(`${refPath} `, '');
-    }
-
-    if (headingMdLink) {
-        const [mdLink, refAlias] = headingMdLink;
-        alias = contentText.replace(mdLink, refAlias);
-    }
+    let [, indent, bullet, content]: RegExpMatchArray = listItemMatch;
+    let { contentText, alias } = handleLinks(
+        plugin,
+        content
+    );
 
     const navLink = app.fileManager.generateMarkdownLink(
         file, filePath, `#${contentText}`, alias
@@ -61,8 +30,72 @@ export function handleCodeblockListItem(
     return { indent, bullet, navLink };
 }
 
+export function handleLinks(plugin: InstaTocPlugin, content: string): HandledLink {
+    let [contentText, alias]: string[] = [content, content];
+
+    // Process Obsidian wiki links with alias
+    contentText = contentText.replace(wikiLinkWithAliasRegex, (match, refPath, refAlias) => {
+        // Text including [[wikilink|wikitext]] -> Text including wikilink wikitext
+        return `${refPath} ${refAlias}`;
+    });
+    alias = alias.replace(wikiLinkWithAliasRegex, (match, refPath, refAlias) => {
+        // [[wikilink|wikitext]] -> wikitext
+        return refAlias;
+    });
+
+    // Process Obsidian wiki links without alias
+    contentText = contentText.replace(wikiLinkNoAliasRegex, (match, refPath) => {
+        // Text including [[wikilink]] -> Text including wikilink
+        // OR
+        // Text including [[path/to/wikilink]] -> Text including wikilink
+        refPath = refPath.split('/').pop() ?? refPath;
+        return refPath;
+    });
+    alias = alias.replace(wikiLinkNoAliasRegex, (match, refPath) => {
+        // [[wikilink]] -> wikilink
+        // OR
+        // [[path/to/wikilink]] -> wikilink
+        refPath = refPath.split('/').pop() ?? refPath;
+        return refPath;
+    });
+
+    // Process markdown links
+    contentText = contentText.replace(markdownLinkRegex, (match, refAlias) => {
+        // Text including [Link](https://www.link.com) -> Text including [Link](https://www.link.com)
+        return match;
+    });
+    alias = alias.replace(markdownLinkRegex, (match, refAlias) => {
+        // [Link](https://www.link.com) -> Link
+        return refAlias;
+    });
+
+    // Final clean and format for tags and HTML
+    contentText = contentText.replace(tagLinkRegex, (match, symbol, tag) => { // Remove any tags
+        // Text including #a-tag -> Text including a-tag
+        return tag;
+    });
+    alias = cleanAlias(alias, plugin); // Process HTML and exluded characters
+
+    return { contentText, alias };
+}
+
+// Strip the alias of specified excluded characters and convert HTML to markdown
+export function cleanAlias(aliasText: string, plugin?: InstaTocPlugin, exclChars?: string[]): string {
+    const excludedChars = (plugin ? plugin.settings.excludedChars : exclChars) ?? [];
+    let alias: string = htmlToMarkdown(aliasText); // Convert any possible HTML to markdown
+    
+    // Replace all specified excluded characters
+    for (const char of excludedChars) alias = alias.replaceAll(char, '');
+
+    return alias;
+}
+
 // Configure indentation for the insta-toc codeblock element post-render
-export function configureRenderedIndent(el: HTMLElement, headingLevels: number[], indentSize: IndentLevel) {
+export function configureRenderedIndent(
+    el: HTMLElement,
+    headingLevels: number[],
+    indentSize: IndentLevel
+): void {
     const listItems: NodeListOf<HTMLLIElement> = el.querySelectorAll('li');
 
     listItems.forEach((listItem: HTMLLIElement, index: number) => {
