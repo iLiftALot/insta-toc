@@ -1,5 +1,8 @@
 # Insta-Toc Plugin
-A plugin to dyamically generate and maintain a table of contents while you're writing in real time.
+[![Version](https://img.shields.io/github/v/release/iLiftALot/insta-toc?include_prereleases&label=latest&color=blue)](https://github.com/iLiftALot/insta-toc/releases)
+[![Test](https://github.com/iLiftALot/insta-toc/actions/workflows/test.yml/badge.svg)](https://github.com/iLiftALot/insta-toc/actions)
+
+A plugin to dyamically generate and maintain a table of contents for you in real time.
 
 ## Demo
 ![./assets/media/assets/media/demonstration.gif](https://raw.githubusercontent.com/iLiftALot/insta-toc/master/assets/media/demonstration.gif)
@@ -32,18 +35,21 @@ npm install insta-toc
 - [Submit a Pull Request](https://github.com/iLiftALot/insta-toc/pulls)
 
 ## Road Map
-- [ ] Implement logic to handle various heading formats
-  - [x] Markdown Links
-  - [x] Wiki-Links
+- [ ] Handle various heading formats
+  - [x] <s>Markdown Links</s>
+  - [x] <s>Wiki-Links</s>
+  - [x] <s>HTML</s>
+  - [x] <s>Tags</s>
+  - [x] <s>Special Characters</s>
   - [ ] TBD
 - [ ] Configure Settings Tab
-  - [x] Indentation
-  - [x] Bullet types
-    - [x] Number
-    - [x] Dash
+  - [x] <s>Indentation</s>
+  - [x] <s>Bullet types</s>
+    - [x] <s>Number</s>
+    - [x] <s>Dash</s>
     - [ ] TBD
-  - [x] Update Delay
+  - [x] <s>ToC Update Delay</s>
+  - [x] <s>Special Character Specifications</s>
+  - [ ] Preferences for customized TOC appearance
   - [ ] TBD
-- [ ] Add preferences for customized TOC appearance
-  - [ ] TBD
-- [x] Add folding capabilities
+- [x] <s>Add folding capabilities</s>
