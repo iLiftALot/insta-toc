@@ -14,7 +14,8 @@ import { deepmerge } from 'deepmerge-ts';
 import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
 import { SettingTab } from './SettingsTab';
 import { ManageToc } from './ManageToc';
-import { configureRenderedIndent, handleCodeblockListItem, listRegex } from './Utils';
+import { configureRenderedIndent, handleCodeblockListItem } from './Utils';
+import { listRegex } from './constants';
 
 
 export default class InstaTocPlugin extends Plugin {
@@ -50,7 +51,7 @@ export default class InstaTocPlugin extends Plugin {
 					const match: RegExpMatchArray | null = line.match(listRegex);
 					if (!match) return line;
 
-					const { indent, bullet, navLink } = handleCodeblockListItem(this.app, file, match, line, filePath);
+					const { indent, bullet, navLink } = handleCodeblockListItem(this.app, this, file, match, filePath);
 
 					// Calculate heading level based on indentation
 					const indentLevel = Math.floor(indent.length / 4); // Each indent level represents one heading level increment
@@ -99,8 +100,8 @@ export default class InstaTocPlugin extends Plugin {
 		}
 
 		// Register the new event listener with the updated debounce delay
-		this.modifyEventRef = this.app.vault.on(
-			"modify",
+		this.modifyEventRef = this.app.metadataCache.on(
+			"changed",
 			debounce(this.handleEditorChange.bind(this), this.settings.updateDelay, true)
 		);
 
