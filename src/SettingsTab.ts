@@ -1,6 +1,13 @@
-import { App, DropdownComponent, PluginSettingTab, Setting, SliderComponent } from 'obsidian';
-import { BulletType, BulletTypes, IndentLevel, UpdateDelay } from './Utils';
+import {
+    App,
+    DropdownComponent,
+    PluginSettingTab,
+    Setting,
+    SliderComponent,
+    TextAreaComponent
+} from 'obsidian';
 import InstaToc from './main';
+import { BulletType, BulletTypes, IndentLevel, UpdateDelay } from './constants';
 
 export class SettingTab extends PluginSettingTab {
     plugin: InstaToc;
@@ -26,7 +33,7 @@ export class SettingTab extends PluginSettingTab {
                         this.plugin.settings.bulletType = value;
                         await this.plugin.saveSettings();
                     })
-        )
+            );
 
         new Setting(containerEl)
             .setName('Indent Size')
@@ -41,7 +48,7 @@ export class SettingTab extends PluginSettingTab {
                         this.plugin.settings.indentSize = value;
                         await this.plugin.saveSettings();
                     })
-            )
+            );
 
         new Setting(containerEl)
             .setName('Update Delay')
@@ -57,6 +64,28 @@ export class SettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                         this.plugin.updateModifyEventListener();
                     })
-            })
+            });
+
+        new Setting(containerEl)
+            .setName('Excluded Chars')
+            .setDesc('Characters to exclude in headings.')
+            .addTextArea((component: TextAreaComponent) => {
+                component
+                    .setValue([...this.plugin.settings.excludedChars].join(','))
+                    .onChange(async (value: string) => {
+                        const textValue = component.getValue();
+                        const excludedChars = new Set([
+                            ...textValue
+                                .replace(/,$/, '').replace(/^,/, '')
+                                .split(',')
+                                .map((value: string) => value.trim())
+                        ]);
+
+                        this.plugin.settings.excludedChars = [...excludedChars];
+                        await this.plugin.saveSettings();
+                    });
+
+                component.inputEl.classList.add('exclude-chars');
+            });
     }
 }
