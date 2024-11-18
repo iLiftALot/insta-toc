@@ -10,6 +10,7 @@
     "homepage": "https://github.com/iLiftALot/insta-toc#readme",
     "main": "dist/build/main.js",
     "scripts": {
+        "test": "jest --config=test/jest.config.js",
         "dev:log": "node esbuild.config.mjs logger && terser -o dist/dev/main.js dist/dev/main.js",
         "dev": "node esbuild.config.mjs && terser -o dist/dev/main.js dist/dev/main.js",
         "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && terser -o dist/build/main.js dist/build/main.js",
@@ -28,18 +29,23 @@
     "author": "Nick C.",
     "license": "MIT",
     "devDependencies": {
-        "@types/node": "^16.11.6",
+        "@types/jest": "^29.5.14",
+        "@types/node": "^16.18.119",
         "@typescript-eslint/eslint-plugin": "8.13.0",
         "@typescript-eslint/parser": "8.13.0",
         "builtin-modules": "4.0.0",
+        "dotenv": "^16.4.5",
         "esbuild": "0.24.0",
+        "jest": "^29.7.0",
         "obsidian": "latest",
         "obsidian-dev-utils": "latest",
         "obsidian-typings": "latest",
-        "dotenv": "^16.4.5",
+        "terser": "5.36.0",
+        "ts-jest": "^29.2.5",
+        "ts-node": "^10.9.2",
         "tslib": "2.4.0",
-        "typescript": "5.6.3",
-        "terser": "5.36.0"
+        "turndown": "^7.2.0",
+        "typescript": "5.6.3"
     },
     "dependencies": {
         "deepmerge-ts": "7.1.3"
