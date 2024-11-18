@@ -1,37 +1,83 @@
+import { HeadingCache, Pos } from "obsidian";
 import TurndownService from "turndown";
 
-export const testStandardHeadings = [
-    { heading: 'Title 1 Level 1', level: 1 },
-    { heading: 'Title 1 Level 2', level: 2 },
-    { heading: 'Title 1 Level 3', level: 3 },
-    { heading: 'Title 1 Level 4', level: 4 },
-    { heading: 'Title 1 Level 5', level: 5 },
-    { heading: 'Title 1 Level 6', level: 6 }
+export const defaultPosition: Pos = { 
+    start: { line: 0, col: 0, offset: 0 },
+    end: { line: 0, col: 0, offset: 0 }
+};
+
+export const testStandardHeadings: HeadingCache[] = [
+    { heading: 'Title 1 Level 1', level: 1, position: defaultPosition },
+    { heading: 'Title 1 Level 2', level: 2, position: defaultPosition },
+    { heading: 'Title 1 Level 3', level: 3, position: defaultPosition },
+    { heading: 'Title 1 Level 4', level: 4, position: defaultPosition },
+    { heading: 'Title 1 Level 5', level: 5, position: defaultPosition },
+    { heading: 'Title 1 Level 6', level: 6, position: defaultPosition }
 ];
 
-export const testHeadingsWithoutFirstLevel = [
-    { heading: 'Title 1 Level 2', level: 2 },
-    { heading: 'Title 1 Level 3', level: 3 },
-    { heading: 'Title 1 Level 4', level: 4 },
-    { heading: 'Title 1 Level 5', level: 5 },
-    { heading: 'Title 1 Level 6', level: 6 }
+export const testHeadingsWithoutFirstLevel: HeadingCache[] = [
+    { heading: 'Title 1 Level 2', level: 2, position: defaultPosition },
+    { heading: 'Title 1 Level 3', level: 3, position: defaultPosition },
+    { heading: 'Title 1 Level 4', level: 4, position: defaultPosition },
+    { heading: 'Title 1 Level 5', level: 5, position: defaultPosition },
+    { heading: 'Title 1 Level 6', level: 6, position: defaultPosition }
 ];
 
-export const testHeadingsMixed = [
-    { heading: 'Title 1 Level 4', level: 4 },
-    { heading: 'Title 1 Level 1', level: 1 },
-    { heading: 'Title 1 Level 6', level: 6 },
-    { heading: 'Title 1 Level 2', level: 2 },
-    { heading: 'Title 2 Level 2', level: 2 },
-    { heading: 'Title 1 Level 3', level: 3 }
+export const testHeadingsMixed: HeadingCache[] = [
+    { heading: 'Title 1 Level 4', level: 4, position: defaultPosition },
+    { heading: 'Title 1 Level 1', level: 1, position: defaultPosition },
+    { heading: 'Title 1 Level 6', level: 6, position: defaultPosition },
+    { heading: 'Title 1 Level 2', level: 2, position: defaultPosition },
+    { heading: 'Title 2 Level 2', level: 2, position: defaultPosition },
+    { heading: 'Title 1 Level 3', level: 3, position: defaultPosition }
 ];
 
-export const testHeadingsWithSpecialChars = [
-    { heading: 'Title 1 `level 1` {with special chars}, **bold**, _italic_, #a-tag, ==highlighted== and ~~strikethrough~~ text', level: 1 },
-    { heading: 'Title 1 level 2 <em style="color: black">with HTML</em>', level: 2 },
-    { heading: 'Title 1 level 3 [[wikilink1]] [[wikilink2|wikitext2]] [mdlink](https://mdurl)', level: 3 },
-    { heading: 'Title 1 level 4 [[wikilink1]] [[wikilink2|wikitext2]] [mdlink1](https://mdurl) [[wikilink3]] [[wikilink4|wikitext3]] [mdlink2](https://mdurl)', level: 4 }
+export const testHeadingsWithSpecialChars: HeadingCache[] = [
+    { 
+        heading: 'Title 1 `level 1` {with special chars}, **bold**, _italic_, #a-tag, ==highlighted== and ~~strikethrough~~ text',
+        level: 1,
+        position: defaultPosition
+    },
+    {
+        heading: 'Title 1 level 2 <em style="color: black">with HTML</em>',
+        level: 2,
+        position: defaultPosition
+    },
+    {
+        heading: 'Title 1 level 3 [[wikilink1]] [[wikilink2|wikitext2]] [mdlink](https://mdurl)',
+        level: 3,
+        position: defaultPosition
+    },
+    {
+        heading: 'Title 1 level 4 [[wikilink1]] [[wikilink2|wikitext2]] [mdlink1](https://mdurl) [[wikilink3]] [[wikilink4|wikitext3]] [mdlink2](https://mdurl)',
+        level: 4,
+        position: defaultPosition
+    }
 ];
+
+
+export enum TestNames {
+    "testStandardHeadings",
+    "testHeadingsWithoutFirstLevel",
+    "testHeadingsMixed",
+    "testHeadingsWithSpecialChars"
+}
+export type TestName = keyof typeof TestNames;
+export type ContextResult = {
+    initialHeadings: string[];
+    formattedHeadings: string[];
+    finalResult: string;
+}
+export type Context = Record<TestName, ContextResult>;
+
+export const initialStandardHeadings = Object.values(testStandardHeadings)
+    .map((cache: HeadingCache) => cache.heading);
+export const initialHeadingsWithoutFirstLevel = Object.values(testHeadingsWithoutFirstLevel)
+    .map((cache: HeadingCache) => cache.heading);
+export const initialHeadingsMixed = Object.values(testHeadingsMixed)
+    .map((cache: HeadingCache) => cache.heading);
+export const initialHeadingsWithSpecialChars = Object.values(testHeadingsWithSpecialChars)
+    .map((cache: HeadingCache) => cache.heading);
 
 export const TEST_DEFAULT_SETTINGS = {
     bulletType: 'dash',

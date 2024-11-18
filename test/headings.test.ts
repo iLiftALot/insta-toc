@@ -1,5 +1,19 @@
-import { describe, test, expect } from '@jest/globals';
-import { testStandardHeadings, testHandleLinks, testHeadingsWithoutFirstLevel, testHeadingsMixed, testHeadingsWithSpecialChars } from "./testingObjects";
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import {
+    testStandardHeadings,
+    testHandleLinks,
+    testHeadingsWithoutFirstLevel,
+    testHeadingsMixed,
+    testHeadingsWithSpecialChars,
+    TestNames,
+    TestName,
+    Context,
+    initialStandardHeadings,
+    initialHeadingsWithSpecialChars,
+    initialHeadingsWithoutFirstLevel,
+    initialHeadingsMixed
+} from "./testingObjects";
+
 
 function testGetIndentationLevel(headingLevel: number, headingLevelStack: number[]) {
     // Pop from the stack until we find a heading level less than the current
@@ -17,6 +31,48 @@ function testGetIndentationLevel(headingLevel: number, headingLevelStack: number
 }
 
 describe('Headings', () => {
+    let iteration = 0;
+    let testId: TestName;
+    const contextObject: Context = {
+        "testStandardHeadings": {
+            "initialHeadings": initialStandardHeadings,
+            "formattedHeadings": [],
+            "finalResult": ""
+        },
+        "testHeadingsWithoutFirstLevel": {
+            "initialHeadings": initialHeadingsWithoutFirstLevel,
+            "formattedHeadings": [],
+            "finalResult": ""
+        },
+        "testHeadingsMixed": {
+            "initialHeadings": initialHeadingsMixed,
+            "formattedHeadings": [],
+            "finalResult": ""
+        },
+        "testHeadingsWithSpecialChars": {
+            "initialHeadings": initialHeadingsWithSpecialChars,
+            "formattedHeadings": [],
+            "finalResult": ""
+        }
+    }
+
+    beforeEach(() => {
+        testId = TestNames[iteration] as TestName;
+        console.log(`${'#'.repeat(10)}\n${testId}\n${'#'.repeat(10)}\n${contextObject[testId].initialHeadings.join('\n')}`);
+    });
+
+    afterEach(() => {
+        const finalResultArray = contextObject[testId].finalResult.split('\n')
+            .reduce<[string, string | undefined][]>((acc, item, index) => {
+                acc.push([contextObject[testId].initialHeadings[index], item]);
+                return acc;
+            }, [])
+            .flatMap(([val1, val2]) => `\n${val1}\n⬇️ ⬇️ ⬇️\n${val2}\n`); // Explicitly define the initial value type as an array of tuples
+
+        console.log(`\nFINAL RESULT:\n${finalResultArray}\n\n${'='.repeat(100)}\n${'='.repeat(100)}\n${'='.repeat(100)}\n\n`);
+        iteration += 1;
+    });
+
     test('Returns indented list with links', () => {
         const md = (() => {
             let testHeadingLevelStack: number[] = [];
@@ -28,6 +84,8 @@ describe('Headings', () => {
                 
                 const heading = testHandleLinks('testStandardHeadings', test.heading, currentIndentLevel);
                 testHeadings.push(heading);
+                
+                contextObject[testId].formattedHeadings.push(heading);
             });
 
             return testHeadings.join('\n');
@@ -42,6 +100,7 @@ describe('Headings', () => {
                     - [[testStandardHeadings#Title 1 Level 6|Title 1 Level 6]]
 `.trim();
 
+        contextObject[testId].finalResult = md;
         expect(md).toEqual(expectedMd);
     });
 
@@ -56,6 +115,8 @@ describe('Headings', () => {
 
                 const heading = testHandleLinks('testHeadingsWithoutFirstLevel', test.heading, currentIndentLevel);
                 testHeadings.push(heading);
+
+                contextObject[testId].formattedHeadings.push(heading);
             });
 
             return testHeadings.join('\n');
@@ -68,7 +129,7 @@ describe('Headings', () => {
             - [[testHeadingsWithoutFirstLevel#Title 1 Level 5|Title 1 Level 5]]
                 - [[testHeadingsWithoutFirstLevel#Title 1 Level 6|Title 1 Level 6]]
 `.trim();
-        
+        contextObject[testId].finalResult = md;
         expect(md).toEqual(expectedMd);
     });
 
@@ -83,6 +144,8 @@ describe('Headings', () => {
 
                 const heading = testHandleLinks('testHeadingsMixed', test.heading, currentIndentLevel);
                 testHeadings.push(heading);
+                
+                contextObject[testId].formattedHeadings.push(heading);
             });
 
             return testHeadings.join('\n');
@@ -97,6 +160,7 @@ describe('Headings', () => {
         - [[testHeadingsMixed#Title 1 Level 3|Title 1 Level 3]]
 `.trim();
 
+        contextObject[testId].finalResult = md;
         expect(md).toEqual(expectedMd);
     });
 
@@ -112,6 +176,8 @@ describe('Headings', () => {
 
                 const heading = testHandleLinks('testHeadingsWithSpecialChars', test.heading, currentIndentLevel);
                 testHeadings.push(heading);
+
+                contextObject[testId].formattedHeadings.push(heading);
             });
 
             return testHeadings.join('\n');
@@ -124,6 +190,7 @@ describe('Headings', () => {
             - [[testHeadingsWithSpecialChars#Title 1 level 4 wikilink1 wikilink2 wikitext2 [mdlink1](https://mdurl) wikilink3 wikilink4 wikitext3 [mdlink2](https://mdurl)|Title 1 level 4 wikilink1 wikitext2 mdlink1 wikilink3 wikitext3 mdlink2]]
 `.trim();
 
+        contextObject[testId].finalResult = md;
         expect(md).toEqual(expectedMd);
     });
 });
