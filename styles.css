@@ -12,3 +12,8 @@
 .fold-toggle:focus {
     outline: none;
 }
+
+.exclude-chars {
+    font-size: larger;
+    font-weight: bolder;
+}
