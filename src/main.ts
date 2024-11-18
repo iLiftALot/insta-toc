@@ -23,14 +23,13 @@ export default class InstaTocPlugin extends Plugin {
 	public settings: InstaTocSettings;
 	private modifyEventRef: EventRef | null = null;
 
-	constructor(app: App, manifest?: PluginManifest) {
-		const mainManifest = manifest ?? Process.env.pluginManifest;
-		super(app, mainManifest);
+	constructor(app: App, manifest: PluginManifest) {
+		super(app, manifest);
 		this.app = app;
 	}
 
 	async onload(): Promise<void> {
-		console.log(`Loading Insta TOC Plugin ${Process.env.pluginVersion}`);
+		console.log(`Loading Insta TOC Plugin`);
 
 		await this.loadSettings();
 		this.addSettingTab(new SettingTab(this.app, this));
@@ -74,7 +73,7 @@ export default class InstaTocPlugin extends Plugin {
 	}
 
 	onunload(): void {
-		console.log(`Unloading Insta TOC Plugin ${Process.env.pluginVersion}`);
+		console.log(`Unloading Insta TOC Plugin`);
 	}
 
 	async loadSettings(): Promise<void> {

@@ -31,8 +31,6 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
-    "typings/**/*.js",
-    "typings/**/*.d.ts",
     "test/**/*.ts"
   ],
   "exclude": ["node_modules", "main.js", "dist"]

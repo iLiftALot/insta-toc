@@ -23,8 +23,8 @@ export class SettingTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
-            .setName('List Bullet Type')
-            .setDesc('Select the list bullet type.')
+            .setName('List bullet style')
+            .setDesc('Select the global list bullet type.')
             .addDropdown((component: DropdownComponent) => 
                 component
                     .addOptions(BulletTypes)
@@ -36,8 +36,8 @@ export class SettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName('Indent Size')
-            .setDesc('Select the indentation size.')
+            .setName('Indentation width')
+            .setDesc('Select the global indentation size.')
             .addSlider((component: SliderComponent) =>
                 component
                     .setLimits(2, 8, 2)
@@ -51,7 +51,7 @@ export class SettingTab extends PluginSettingTab {
             );
 
         new Setting(containerEl)
-            .setName('Update Delay')
+            .setName('Update delay')
             .setDesc('The delay for each TOC update.')
             .addSlider((component: SliderComponent) => {
                 component
@@ -67,7 +67,7 @@ export class SettingTab extends PluginSettingTab {
             });
 
         new Setting(containerEl)
-            .setName('Excluded Chars')
+            .setName('Excluded characters')
             .setDesc('Characters to exclude in headings.')
             .addTextArea((component: TextAreaComponent) => {
                 component

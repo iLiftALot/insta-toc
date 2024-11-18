@@ -1,7 +1,6 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtins from "builtin-modules";
-import { config } from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
@@ -33,11 +32,10 @@ const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 const manifestJsonPath = path.join(__dirname, 'manifest.json');
 const manifestJson = JSON.parse(readFileSync(manifestJsonPath, 'utf-8'));
 
-if (!existsSync(`${__dirname}/data.json`)) {
-	writeFileSync(`${__dirname}/data.json`, "{}", 'utf-8');
-}
-
 const dataJsonPath = path.join(__dirname, 'data.json');
+if (!existsSync(dataJsonPath)) {
+	writeFileSync(dataJsonPath, "{}", 'utf-8');
+}
 const dataJson = JSON.parse(readFileSync(dataJsonPath, 'utf-8'));
 
 // Retrieve the name of the package
@@ -50,67 +48,14 @@ writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 4), 'utf-8');
 logs.push('Package Name:', packageName);
 logs.push(`Set main.js directory to ${packageJson.main}`);
 
-// Function to find .env file by traversing upward
-function findEnvFile(startDir) {
-	let currentDir = startDir;
-
-	while (currentDir !== path.parse(currentDir).root) {
-		try {
-			const envPath = path.join(currentDir, '.env');
-			if (existsSync(envPath)) {
-				return envPath;
-			}
-			currentDir = path.dirname(currentDir);
-			logs.push(`CURRENT DIR: ${currentDir}`);
-		} catch (err) {
-			logs.push(`Error in findEnvFile: ${err}`);
-			return null;
-		}
-	}
-	return null;
-}
-
-// Start searching from the current directory
-const dirYielder = path.resolve(path.dirname(import.meta.url));
-let envFilePath = findEnvFile(dirYielder);
-
-if (!envFilePath) {
-	envFilePath = `${dirYielder.split('/file:')[0]}/.env`;
-	writeFileSync(envFilePath, '');
-}
-logs.push(`Found .env file at ${envFilePath}`);
-
-const { pluginRoot, projectRoot, vaultRoot, envPath } = {
-	pluginRoot: `${path.dirname(dirYielder.split('/file:')[0])}/${packageName}`,
-	projectRoot: decodeURI(dirYielder.split('/file:')[1]),
-	vaultRoot: decodeURI(dirYielder.split('/file:')[1].replace(/\/\.obsidian.*/, '')),
-	envPath: envFilePath
+const { pluginRoot, vaultRoot, envPath } = {
+	pluginRoot: __dirname,
+	vaultRoot: decodeURI(__dirname.replace(/\/\.obsidian.*/, ''))
 };
-logs.push(`pluginRoot: ${pluginRoot}\nprojectRoot: ${projectRoot}\nvaultRoot: ${vaultRoot}\nenvPath: ${envPath}`);
-const vaultName = decodeURI(vaultRoot.split('/').pop().trim());
+logs.push(`pluginRoot: ${pluginRoot}\nvaultRoot: ${vaultRoot}`);
 
-let parsedEnv = {};
-if (envFilePath) {
-	const envConfig = config({ path: envFilePath });
-	if (envConfig.parsed) {
-		logs.push(`Loaded .env file from ${envFilePath}`);
-
-		parsedEnv = envConfig.parsed;
-		parsedEnv["envPath"] = envPath;
-		parsedEnv["pluginRoot"] = pluginRoot;
-		parsedEnv["pluginManifest"] = manifestJson;
-		parsedEnv["pluginSettingsPath"] = dataJsonPath;
-		parsedEnv["pluginSettings"] = dataJson;
-		parsedEnv["pluginVersion"] = packageVersion;
-		parsedEnv["projectRoot"] = projectRoot;
-		parsedEnv["vaultRoot"] = vaultRoot;
-		parsedEnv["vaultName"] = vaultName;
-
-		logs.push(`parsedEnv: ${JSON.stringify(parsedEnv, null, 4)}`);
-	} else {
-		logs.push(`WARNING: Unable to parse .env file: ${envConfig.error}`);
-	}
-}
+const vaultName = vaultRoot.split('/').pop();
+logs.push(`vaultName: ${vaultName}`);
 
 const sourcePath = path.resolve(`${pluginRoot}/${packageMain}`);
 const targetPath = path.resolve(`${pluginRoot}/main.js`);
@@ -140,9 +85,6 @@ const context = await esbuild.context({
 		"@lezer/lr",
 		...builtins
 	],
-	define: {
-		"Process.env": JSON.stringify(parsedEnv),
-	},
 	platform: "node",
 	format: "cjs",
 	target: "es2021",
@@ -150,7 +92,7 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: packageMain,
-	minify: prod,
+	minify: prod
 }).catch((error) => {
 	console.error(error);
 	process.exit(1);
@@ -164,7 +106,7 @@ function copyMainJs() {
 		logs = logs.join('\n');
 		if (shouldLog) console.log(logs);
 	} catch (error) {
-		console.error(`Error creating symlink: ${error}\nLogs:\n${logs.join('\n')}`);
+		console.error(`Error copying main.js: ${error}\nLogs:\n${logs.join('\n')}`);
 		process.exit(1);
 	}
 }
