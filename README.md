@@ -29,13 +29,29 @@ There are various other ToC plugins for Obsidian, however, they come with certai
 - Feel free to include HTML or any kind of special symbols within headings. This plugin will handle these cases elegantly.
 
 **Heading Hierarchy Handling**
-- Include any type of heading hierarchy you want. Your heading structure doesn't have to be any certain way. Other plugins will prohibit the ToC insertion if the heading hierachy
+- Include any type of heading hierarchy you want. Your heading structure doesn't have to be any certain way. Other plugins will prohibit the ToC insertion if the heading hierachy.
+
+**Settings**
+
+*Bullet Style*
+  - Select your preferred list-bullet style within the settings tab.
+
+*Update Delay*
+  - Configure the delay between ToC updates.
+
+*Excluded Characters*
+  - Specify which characters should be escaped within headings.
+
+*Indentation Width*
+  - Determine your preferred amount of indentation spacing.
 
 ## Usage
 1. Insert the `insta-toc` code block:
 
+~~~
 ```insta-toc
 ```
+~~~
 
 2. Type away.
 
