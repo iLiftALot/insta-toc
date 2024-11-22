@@ -57,20 +57,21 @@ There are various other ToC plugins for Obsidian, however, they come with certai
 
 ## Installation
 ### Obsidian Community Plugins Tab
-1. Open Obsidian and press `SHIFT+CMD+P`.
-2. Navigate to the search bar and type `Insta TOC`
-3. Click the install button.
+1. Open Obsidian and press `CMD+,`.
+2. Navigate to the Community plugins tab and click the `Browse` button.
+3. Navigate to the search bar and type `Insta TOC`
+4. Click the install button.
 
 ### BRAT
 1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) community plugin.
-2. Open Obsidian and press `SHIFT+CMD+P`.
+2. Open Obsidian and press `CMD+SHIFT+P`.
 3. Type `>BRAT: Plugins: Add a beta plugin for testing` and select the option.
 4. Insert `https://github.com/iLiftALot/insta-toc` and submit.
 
 ### Manual
 1. Download the [latest release](https://github.com/iLiftALot/insta-toc/releases).
 2. Extract the `insta-toc` folder from the zip to your vault's plugins folder: `/path/to/<vault>/.obsidian/plugins/`.
-*Note*: On some machines the .obsidian folder may be hidden. On MacOS you should be able to press Command+Shift+Dot to show the folder in Finder.
+*Note*: On some machines the .obsidian folder may be hidden. On MacOS you should be able to press `CMD+SHIFT+.` to show the folder in Finder.
 3. Reload Obsidian.
 
 ### npm
