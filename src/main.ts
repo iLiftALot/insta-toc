@@ -14,7 +14,7 @@ import { deepmerge } from 'deepmerge-ts';
 import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
 import { SettingTab } from './SettingsTab';
 import { ManageToc } from './ManageToc';
-import { configureRenderedIndent, getEditorData, handleCodeblockListItem } from './utils';
+import { configureRenderedIndent, getEditorData, handleCodeblockListItem } from './Utils';
 import { listRegex, localTocSettingsRegex } from './constants';
 import { EditorData } from './types';
 import { Validator } from './validator';
