@@ -10,7 +10,7 @@ import {
 import { defaultLocalSettings, instaTocCodeBlockId, localTocSettingsRegex } from "./constants";
 import { LocalTocSettings, ValidatedInstaToc, ValidCacheType } from "./types";
 import InstaTocPlugin from "./main";
-import { deepMerge, escapeRegExp, isHeadingLevel, isRegexPattern } from "./utils";
+import { deepMerge, escapeRegExp, isHeadingLevel, isRegexPattern } from "./Utils";
 
 
 export class Validator {
