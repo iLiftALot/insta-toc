@@ -52,6 +52,11 @@ export const testHeadingsWithSpecialChars: HeadingCache[] = [
         heading: 'Title 1 level 4 [[wikilink1]] [[wikilink2|wikitext2]] [mdlink1](https://mdurl) [[wikilink3]] [[wikilink4|wikitext3]] [mdlink2](https://mdurl)',
         level: 4,
         position: defaultPosition
+    },
+    {
+        heading: 'Title 1 level 5 <!-- omit -->',
+        level: 5,
+        position: defaultPosition
     }
 ];
 
@@ -93,9 +98,9 @@ export const testWikiLinkNoAliasRegex = /\[\[([^\]\|]+)\]\]/g;
 // Extracts path/link and alias from headings with regular markdown links
 export const testMarkdownLinkRegex = /\[([^\]]+)\]\([^)]+\)/g;
 // Replaces tags in headings
-export const testTagLinkRegex = /(#)([^\s]*\w)/g;
-
-// `#${contentText}|alias`
+export const testTagLinkRegex: RegExp = /(#)([/\-_\w][^\s]*)/g;
+// Omit Specific Headings
+export const testOmitHeadingRegex: RegExp = /<!--\s*omit\s*-->/;
 
 export function testHandleLinks(fileName: string, content: string, indentation: number) {
     let [contentText, alias] = [content, content];
@@ -144,7 +149,6 @@ export function testHandleLinks(fileName: string, content: string, indentation: 
     alias = testCleanAlias(alias); // Process HTML and exluded characters
 
     return `${' '.repeat((indentation < 0 ? 0 : indentation) * 4)}- [[${fileName}#${contentText}|${alias}]]`;
-    //return `${' '.repeat(indentation * 4)}- [[${fileName}#${contentText}|${alias}]]`;
 }
 
 // Strip the alias of specified excluded characters and convert HTML to markdown

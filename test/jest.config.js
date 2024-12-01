@@ -1,4 +1,5 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
+
 module.exports = {
     testMatch: ["**/*.test.(ts|js)"],
     testTimeout: 1000,

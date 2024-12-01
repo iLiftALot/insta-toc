@@ -1,10 +1,11 @@
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import {
     testStandardHeadings,
     testHandleLinks,
     testHeadingsWithoutFirstLevel,
     testHeadingsMixed,
     testHeadingsWithSpecialChars,
+    testOmitHeadingRegex,
     TestNames,
     TestName,
     Context,
@@ -171,13 +172,15 @@ describe('Headings', () => {
             const testHeadings: string[] = [];
 
             testHeadingsWithSpecialChars.forEach((test) => {
-                const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(test.level, testHeadingLevelStack);
-                testHeadingLevelStack = headingLevelStack;
+                if (!test.heading.match(testOmitHeadingRegex)) {
+                    const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(test.level, testHeadingLevelStack);
+                    testHeadingLevelStack = headingLevelStack;
 
-                const heading = testHandleLinks('testHeadingsWithSpecialChars', test.heading, currentIndentLevel);
-                testHeadings.push(heading);
+                    const heading = testHandleLinks('testHeadingsWithSpecialChars', test.heading, currentIndentLevel);
+                    testHeadings.push(heading);
 
-                contextObject[testId].formattedHeadings.push(heading);
+                    contextObject[testId].formattedHeadings.push(heading);
+                }
             });
 
             return testHeadings.join('\n');

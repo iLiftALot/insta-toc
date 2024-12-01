@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Vitest",
+      "type": "shell",
+      "command": "zsh \"${workspaceFolder}/.vscode/run-vitest.zsh\"",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "runOptions": {
+        "instanceLimit": 1,
+        "runOn": "default",
+        "reevaluateOnRerun": true
+      },
+      "icon": {
+        "id": "go-to-search",
+        "color": "terminal.ansiCyan"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    }
+  ]
+}
