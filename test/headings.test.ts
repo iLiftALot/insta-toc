@@ -17,7 +17,7 @@ import {
 
 
 function testGetIndentationLevel(headingLevel: number, headingLevelStack: number[]) {
-    // Pop from the stack until we find a heading level less than the current
+    // Pop from the stack until we find a heading level less than the current 
     while (
         headingLevelStack.length > 0 && // Avoid indentation for the first heading
         headingLevel <= headingLevelStack[headingLevelStack.length - 1]
