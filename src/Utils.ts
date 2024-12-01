@@ -1,14 +1,25 @@
-import { TFile, App, htmlToMarkdown } from "obsidian";
 import {
-    HandledLink,
-    IndentLevel,
-    ListItemContext,
+    TFile,
+    App,
+    htmlToMarkdown,
+    Editor,
+    EditorPosition
+} from "obsidian";
+import {
     markdownLinkRegex,
     tagLinkRegex,
     wikiLinkNoAliasRegex,
     wikiLinkWithAliasRegex
 } from "./constants";
+import {
+    EditorData,
+    HandledLink,
+    HeadingLevel,
+    IndentLevel,
+    ListItemContext
+} from "./types";
 import InstaTocPlugin from "./main";
+
 
 export function handleCodeblockListItem(
     app: App,
@@ -18,12 +29,9 @@ export function handleCodeblockListItem(
     filePath: string
 ): ListItemContext {
     let [, indent, bullet, content]: RegExpMatchArray = listItemMatch;
-    let { contentText, alias } = handleLinks(
-        plugin,
-        content
-    );
+    let { contentText, alias } = handleLinks(plugin, content);
 
-    const navLink = app.fileManager.generateMarkdownLink(
+    const navLink: string = app.fileManager.generateMarkdownLink(
         file, filePath, `#${contentText}`, alias
     );
 
@@ -117,15 +125,62 @@ export function configureRenderedIndent(
             toggleButton.addEventListener('click', () => {
                 if (subList.style.display === 'none') {
                     subList.style.display = '';
-                    toggleButton.textContent = '▾'; // Down arrow
+                    toggleButton.textContent = '▾';
                 } else {
                     subList.style.display = 'none';
-                    toggleButton.textContent = '▸'; // Right arrow
+                    toggleButton.textContent = '▸';
                 }
             });
 
-            // Insert the toggle button
             listItem.prepend(toggleButton);
         }
     });
+}
+
+
+export function getEditorData(app: App): EditorData {
+    const editor: Editor | undefined = app.workspace.activeEditor?.editor
+    const cursorPos: EditorPosition | undefined = editor?.getCursor();
+    
+    return { editor, cursorPos }
+}
+
+export function escapeRegExp(string: string): string {
+    return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function isRegexPattern(string: string): boolean {
+    // Checks if the string starts and ends with '/'
+    return /^\/.*\/$/.test(string);
+}
+
+export function isHeadingLevel(value: any): value is HeadingLevel {
+    return [1, 2, 3, 4, 5, 6].includes(value);
+}
+
+function isMergeableObject(value: any): boolean {
+    return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function deepMerge<T>(target: Partial<T>, source: Partial<T>): T {
+    if (isMergeableObject(target) && isMergeableObject(source)) {
+        for (const key of Object.keys(source) as Array<keyof T>) {
+            const targetValue = target[key];
+            const sourceValue = source[key];
+
+            if (isMergeableObject(sourceValue)) {
+                if (!targetValue) {
+                    (target as any)[key] = {};
+                }
+                
+                deepMerge(target[key] as any, sourceValue as any);
+            } else if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
+                (target as any)[key] = [...new Set([...targetValue, ...sourceValue])];
+            } else {
+                (target as any)[key] = sourceValue;
+            }
+        }
+    }
+
+    return target as T;
 }

@@ -1,4 +1,5 @@
-import { BulletType, DefaultExcludedChars, IndentLevel, UpdateDelay } from "./constants";
+import { DefaultExcludedChars } from "./constants";
+import { BulletType, IndentLevel, UpdateDelay } from "./types";
 
 export interface InstaTocSettings {
     bulletType: BulletType;

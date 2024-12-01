@@ -7,7 +7,9 @@ import {
     TextAreaComponent
 } from 'obsidian';
 import InstaToc from './main';
-import { BulletType, BulletTypes, IndentLevel, UpdateDelay } from './constants';
+import { BulletTypes } from './constants';
+import { BulletType, IndentLevel, UpdateDelay } from "./types";
+
 
 export class SettingTab extends PluginSettingTab {
     plugin: InstaToc;
@@ -71,12 +73,13 @@ export class SettingTab extends PluginSettingTab {
             .setDesc('Characters to exclude in headings.')
             .addTextArea((component: TextAreaComponent) => {
                 component
-                    .setValue([...this.plugin.settings.excludedChars].join(','))
+                    .setValue([...new Set(this.plugin.settings.excludedChars)].join(','))
                     .onChange(async (value: string) => {
                         const textValue = component.getValue();
                         const excludedChars = new Set([
+                            ...this.plugin.settings.excludedChars,
                             ...textValue
-                                .replace(/,$/, '').replace(/^,/, '')
+                                .replace(/^,/, '').replace(/,$/, '')
                                 .split(',')
                                 .map((value: string) => value.trim())
                         ]);

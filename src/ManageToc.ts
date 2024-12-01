@@ -1,47 +1,26 @@
 import {
-    App,
-    CachedMetadata,
-    Editor,
-    EditorPosition,
     EditorRange,
     HeadingCache,
-    SectionCache,
-    TFile
+    stringifyYaml
 } from 'obsidian';
 import InstaTocPlugin from './main';
-import { instaTocCodeBlockId, TocData } from './constants';
+import { instaTocCodeBlockId } from './constants';
+import { Validator } from './validator';
 
 export class ManageToc {
-    public app: App;
-    public plugin: InstaTocPlugin;
-    public editor: Editor;
-    public file: TFile;
-    public fileCache: CachedMetadata | null;
-    public headingLevelStack: number[];
+    private plugin: InstaTocPlugin;
+    private validator: Validator;
+    private headingLevelStack: number[];
 
-    constructor(app: App, plugin: InstaTocPlugin, editor: Editor, file: TFile) {
-        this.app = app;
+    constructor(
+        plugin: InstaTocPlugin,
+        validator: Validator
+    ) {
         this.plugin = plugin;
-        this.editor = editor;
-        this.file = file;
+        this.validator = validator;
         this.headingLevelStack = [];
-        this.fileCache = this.app.metadataCache.getFileCache(file);
-
-        if (this.fileCache) this.updateAutoToc();
-    }
-
-    // Provides the insert location range for the new insta-toc codeblock
-    private getTocInsertPosition(instaTocSection: SectionCache): EditorRange {
-        // Define the star/end line/character index
-        const startLine: number = instaTocSection.position.start.line;
-        const startCh = 0;
-        const endLine: number = instaTocSection.position.end.line;
-        const endCh: number = instaTocSection.position.end.col;
-
-        const tocStartPos: EditorPosition = { line: startLine, ch: startCh };
-        const tocEndPos: EditorPosition = { line: endLine, ch: endCh };
-
-        return { from: tocStartPos, to: tocEndPos };
+        
+        this.updateAutoToc();
     }
 
     // Determine the correct indentation level
@@ -61,9 +40,10 @@ export class ManageToc {
     }
 
     // Generates a new insta-toc codeblock with number-type bullets
-    private generateNumberedToc(fileHeadings: HeadingCache[]): string {
+    private generateNumberedToc(): string {
         const tocHeadingRefs: string[] = [];
         const levelNumbers: { [level: number]: number } = {};
+        const fileHeadings: HeadingCache[] = this.validator.fileHeadings;
 
         for (const headingCache of fileHeadings) {
             const headingLevel = headingCache.level;
@@ -90,13 +70,25 @@ export class ManageToc {
             tocHeadingRefs.push(tocHeadingRef);
         }
 
-        const tocContent: string = tocHeadingRefs.join('\n');
-        return `\`\`\`${instaTocCodeBlockId}\n${tocContent}\n\`\`\``;
+        const tocContent: string = `${
+            instaTocCodeBlockId
+        }\n---\n${
+            stringifyYaml(this.validator.localTocSettings)
+        }---\n\n${
+            '#'.repeat(this.validator.localTocSettings.title.level)
+        } ${
+            this.validator.localTocSettings.title.name
+        }\n\n${
+            tocHeadingRefs.join('\n')
+        }`;
+        
+        return `\`\`\`${tocContent}\n\`\`\``;
     }
 
     // Generates a new insta-toc codeblock with normal dash-type bullets
-    private generateNormalToc(fileHeadings: HeadingCache[]): string {
+    private generateNormalToc(): string {
         const tocHeadingRefs: string[] = [];
+        const fileHeadings: HeadingCache[] = this.validator.fileHeadings;
 
         for (const headingCache of fileHeadings) {
             const headingLevel: number = headingCache.level;
@@ -110,47 +102,48 @@ export class ManageToc {
             tocHeadingRefs.push(tocHeadingRef);
         }
 
-        const tocContent: string = tocHeadingRefs.join('\n');
-        return `\`\`\`${instaTocCodeBlockId}\n${tocContent}\n\`\`\``;
-    }
-
-    // Extract the headings and insta-toc sections from the active file's cache
-    private getTocData(): TocData {
-        const fileHeadings: HeadingCache[] = this.fileCache?.headings ?? [];
-        const instaTocSection: SectionCache | undefined = this.fileCache?.sections
-            ? this.fileCache.sections.find(
-                (section: SectionCache) => section.type === 'code' &&
-                    this.editor.getLine(section.position.start.line) === `\`\`\`${instaTocCodeBlockId}`
-            ) : undefined;
+        const tocContent: string = `${
+            instaTocCodeBlockId
+        }\n---\n${
+            stringifyYaml(this.validator.localTocSettings)
+        }---\n\n${
+            '#'.repeat(this.validator.localTocSettings.title.level)
+        } ${
+            this.validator.localTocSettings.title.name
+        }\n\n${
+            tocHeadingRefs.join('\n')
+        }`;
         
-        return { fileHeadings, instaTocSection };
+        return `\`\`\`${tocContent}\n\`\`\``;
     }
 
     // Dynamically update the TOC
     private updateAutoToc(): void {
-        // Extract the headings and sections from the active file's cache
-        const { fileHeadings, instaTocSection }: TocData = this.getTocData();
-
-        // Return early if no sections (which means no insta-toc blocks)
-        if (!instaTocSection) return;
-
-        // Get the insertion position and generate the updated TOC
-        const tocInsertRange: EditorRange = this.getTocInsertPosition(instaTocSection);
+        const tocInsertRange: EditorRange = this.validator.tocInsertPos;
+        // Determine if local settings override global
+        const decisionMaker: string = this.plugin.settings.bulletType !== this.validator.localTocSettings.style.listType
+            ? this.validator.localTocSettings.style.listType
+            : this.plugin.settings.bulletType;
         
         let newTocBlock: string;
-        switch(this.plugin.settings.bulletType) {
+        switch(decisionMaker) {
             case "dash":
-                newTocBlock = this.generateNormalToc(fileHeadings);
+                newTocBlock = this.generateNormalToc();
                 break;
             case "number":
-                newTocBlock = this.generateNumberedToc(fileHeadings);
+                newTocBlock = this.generateNumberedToc();
                 break;
             default:
-                newTocBlock = this.generateNormalToc(fileHeadings);
+                newTocBlock = this.generateNormalToc();
                 break;
         }
 
+        // Set the flag to indicate plugin-initiated changes
+        this.plugin.isPluginEdit = true;
+
         // Replace the old TOC with the updated TOC
-        this.editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
+        this.validator.editor.replaceRange(
+            newTocBlock, tocInsertRange.from, tocInsertRange.to
+        );
     }
 }

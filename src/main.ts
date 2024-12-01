@@ -1,8 +1,8 @@
 import {
 	App,
-	Editor,
+	CachedMetadata,
+	Debouncer,
 	EventRef,
-	MarkdownFileInfo,
 	MarkdownPostProcessorContext,
 	MarkdownRenderer,
 	Plugin,
@@ -14,14 +14,24 @@ import { deepmerge } from 'deepmerge-ts';
 import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
 import { SettingTab } from './SettingsTab';
 import { ManageToc } from './ManageToc';
-import { configureRenderedIndent, handleCodeblockListItem } from './Utils';
-import { listRegex } from './constants';
+import { configureRenderedIndent, getEditorData, handleCodeblockListItem } from './utils';
+import { listRegex, localTocSettingsRegex } from './constants';
+import { EditorData } from './types';
+import { Validator } from './validator';
 
 
 export default class InstaTocPlugin extends Plugin {
 	public app: App;
 	public settings: InstaTocSettings;
-	private modifyEventRef: EventRef | null = null;
+	private validator: Validator | undefined;
+	private modifyEventRef: EventRef | undefined;
+	private debouncer: Debouncer<[fileCache: CachedMetadata], void>;
+
+	// Flags to maintain state with updates
+	public isPluginEdit = false;
+	public hasTocBlock = true;
+
+	public getDelay = () => this.settings.updateDelay;
 
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest);
@@ -38,11 +48,18 @@ export default class InstaTocPlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(
 			"insta-toc",
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> => {
+				if (!this.hasTocBlock) {
+					console.log('processor setting hasTocBlock to true.')
+					this.hasTocBlock = true;
+				}
+
 				const pathWithFileExtension: string = ctx.sourcePath; // Includes .md
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 				const file: TFile = this.app.vault.getAbstractFileByPath(pathWithFileExtension) as TFile;
-
-				const lines: string[] = source.split('\n'); // TOC codeblock content
+				// TOC codeblock content
+				const lines: string[] = source
+					.replace(localTocSettingsRegex, '') // Process only the ToC content without local settings
+					.split('\n');
 				const headingLevels: number[] = []; // To store heading levels corresponding to each line
 
 				// Process the codeblock text by converting each line into a markdown link list item
@@ -68,12 +85,16 @@ export default class InstaTocPlugin extends Plugin {
 			}
 		);
 
-		// Detect when the user types and update headers
+		this.registerEvent(
+			// Reset with new files to fix no detection on file open
+			this.app.workspace.on("file-open", () => this.hasTocBlock = true)
+		);
+
 		this.updateModifyEventListener();
 	}
 
 	onunload(): void {
-		console.log(`Unloading Insta TOC Plugin`);
+		console.log(`Insta TOC Plugin Unloaded.`);
 	}
 
 	async loadSettings(): Promise<void> {
@@ -95,27 +116,52 @@ export default class InstaTocPlugin extends Plugin {
 	public updateModifyEventListener(): void {
 		if (this.modifyEventRef) {
 			// Unregister the previous event listener
-			this.app.vault.offref(this.modifyEventRef);
+			this.app.metadataCache.offref(this.modifyEventRef);
 		}
 
+		this.setDebouncer(); // Set the debouncer
+		
 		// Register the new event listener with the updated debounce delay
 		this.modifyEventRef = this.app.metadataCache.on(
-			"changed",
-			debounce(this.handleEditorChange.bind(this), this.settings.updateDelay, true)
+			"changed", // file cache (containing heading cache) has been updated
+			(file: TFile, data: string, cache: CachedMetadata) => {
+				if (!this.hasTocBlock) return;
+
+				this.debouncer(cache);
+			}
 		);
 
 		this.registerEvent(this.modifyEventRef);
 	}
 
-	// Handle all active file changes for the insta-toc plaintext content
-	private async handleEditorChange(): Promise<void> {
-		const activeEditor: MarkdownFileInfo | null = this.app.workspace.activeEditor;
-		const editor: Editor | undefined = activeEditor?.editor;
-		const file: TFile | undefined = activeEditor?.file ?? undefined;
+	// Needed for dynamically setting the debounce delay
+	public setDebouncer(): void {
+		this.debouncer = debounce(
+			(fileCache: CachedMetadata) => {
+				// Ignore updates performed by ManageToc.ts
+				if (this.isPluginEdit) {
+					this.isPluginEdit = false;
+					return;
+				}
 
-		if (!activeEditor || !editor || !file) return;
+				const { editor, cursorPos }: EditorData = getEditorData(this.app);
 
-		// Dynamically update the insta-toc codeblock
-		new ManageToc(this.app, this, editor, file);
+				if (!editor || !cursorPos) return;
+
+				// Reuse and update the existing validator instance if it exists
+				if (this.validator) {
+					this.validator.update(this, fileCache, editor, cursorPos);
+				} else {
+					this.validator = new Validator(this, fileCache, editor, cursorPos);
+				}
+
+				const isValid: boolean = this.validator.isValid();
+
+				if (isValid) {
+					// Handle all active file changes for the insta-toc plaintext content
+					new ManageToc(this, this.validator);
+				}
+			}, this.settings.updateDelay, false
+		);
 	}
 }
