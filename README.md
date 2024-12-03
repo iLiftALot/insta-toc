@@ -1,9 +1,8 @@
 # Insta TOC Plugin <!-- omit in toc -->
 
-[![Version](https://img.shields.io/github/v/release/iLiftALot/insta-toc?include_prereleases&label=latest&logo=github&labelColor=blue)](https://github.com/iLiftALot/insta-toc/releases) [![Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22insta-toc%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?search=insta%20toc) [![NPM Version](https://img.shields.io/npm/v/insta-toc)](https://www.npmjs.com/package/insta-toc) [![Test](https://github.com/iLiftALot/insta-toc/actions/workflows/test.yml/badge.svg)](https://github.com/iLiftALot/insta-toc/actions)
+[![Version](https://img.shields.io/github/v/release/iLiftALot/insta-toc?include_prereleases&label=latest&logo=github&labelColor=blue)](https://github.com/iLiftALot/insta-toc/releases) [![Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%23483699&label=downloads&query=%24%5B%22insta-toc%22%5D.downloads&url=https%3A%2F%2Fraw.githubusercontent.com%2Fobsidianmd%2Fobsidian-releases%2Fmaster%2Fcommunity-plugin-stats.json)](https://obsidian.md/plugins?search=insta%20toc) [![NPM Version](https://img.shields.io/npm/v/insta-toc)](https://www.npmjs.com/package/insta-toc)
 
 > A plugin to ***dyamically*** generate and maintain a table of contents for you in ***real time***.
-
 
 ## Table of Contents <!-- omit in toc -->
 - [Demonstration](#demonstration)
@@ -16,7 +15,6 @@
   - [Manual](#manual)
 - [Contributing](#contributing)
 - [Road Map](#road-map)
-
 
 
 ## Demonstration
