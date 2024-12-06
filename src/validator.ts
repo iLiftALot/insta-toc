@@ -159,10 +159,10 @@ export class Validator {
             } else {
                 const { name, level } = title;
                 if (name !== undefined && typeof name !== 'string') {
-                    validationErrors.push("'title.name' must be a string.");
+                    validationErrors.push("'title.name' must be a string indicating the title to be displayed on the ToC.");
                 }
                 if (level !== undefined && !isHeadingLevel(level)) {
-                    validationErrors.push("'title.level' must be an integer between 1 and 6.");
+                    validationErrors.push("'title.level' must be an integer between 1 and 6 indicating the heading level of the ToC title.");
                 }
             }
         }
@@ -170,7 +170,7 @@ export class Validator {
         // Validate and assign 'exclude'
         if (parsedYml.exclude !== undefined) {
             if (typeof parsedYml.exclude !== 'string') {
-                validationErrors.push("'exclude' must be a string.");
+                validationErrors.push("'exclude' must be a string (\"...\") containing each character to exclude, or a regex pattern (/.../).");
             }
         }
 
@@ -190,11 +190,11 @@ export class Validator {
         // Validate and assign 'omit'
         if (parsedYml.omit !== undefined) {
             if (!Array.isArray(parsedYml.omit)) {
-                validationErrors.push("'omit' must be an array of strings.");
+                validationErrors.push("'omit' must be an array of strings indicating the text of each heading you'd like to omit.");
             } else {
                 for (const item of parsedYml.omit) {
                     if (typeof item !== 'string') {
-                        validationErrors.push("'omit' array must contain only strings.");
+                        validationErrors.push("'omit' array must contain only strings indicating the text of headings you'd like to omit.");
                         break;
                     }
                 }
@@ -210,10 +210,10 @@ export class Validator {
             } else {
                 const { min, max } = levels;
                 if (min !== undefined && !isHeadingLevel(min)) {
-                    validationErrors.push("'levels.min' must be an integer between 1 and 6.");
+                    validationErrors.push("'levels.min' must be an integer between 1 and 6 indicating the minimum heading level to include.");
                 }
                 if (max !== undefined && !isHeadingLevel(max)) {
-                    validationErrors.push("'levels.max' must be an integer between 1 and 6.");
+                    validationErrors.push("'levels.max' must be an integer between 1 and 6 indicating the maximum heading level to include.");
                 }
                 if (min !== undefined && max !== undefined && min > max) {
                     validationErrors.push("'levels.min' cannot be greater than 'levels.max'.");
