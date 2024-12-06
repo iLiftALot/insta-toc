@@ -21,6 +21,7 @@ import {
 import InstaTocPlugin from "./main";
 
 
+// Handle the codeblock list item and return the indent level and navigation link
 export function handleCodeblockListItem(
     app: App,
     plugin: InstaTocPlugin,
@@ -38,6 +39,7 @@ export function handleCodeblockListItem(
     return { indent, bullet, navLink };
 }
 
+// Handle links in the content and alias of a list item
 export function handleLinks(plugin: InstaTocPlugin, content: string): HandledLink {
     let [contentText, alias]: string[] = [content, content];
 
@@ -56,15 +58,13 @@ export function handleLinks(plugin: InstaTocPlugin, content: string): HandledLin
         // Text including [[wikilink]] -> Text including wikilink
         // OR
         // Text including [[path/to/wikilink]] -> Text including wikilink
-        refPath = refPath.split('/').pop() ?? refPath;
-        return refPath;
+        return refPath.split('/').pop() ?? refPath;
     });
     alias = alias.replace(wikiLinkNoAliasRegex, (match, refPath) => {
         // [[wikilink]] -> wikilink
         // OR
         // [[path/to/wikilink]] -> wikilink
-        refPath = refPath.split('/').pop() ?? refPath;
-        return refPath;
+        return refPath.split('/').pop() ?? refPath;
     });
 
     // Process markdown links
@@ -77,13 +77,14 @@ export function handleLinks(plugin: InstaTocPlugin, content: string): HandledLin
         return refAlias;
     });
 
-    // Final clean and format for tags and HTML
+    // Clean up tags
     contentText = contentText.replace(tagLinkRegex, (match, symbol, tag) => { // Remove any tags
         // Text including #a-tag -> Text including a-tag
         return tag;
     });
-    alias = cleanAlias(alias, plugin); // Process HTML and exluded characters
-
+    // Process HTML and exluded characters
+    alias = cleanAlias(alias, plugin);
+    
     return { contentText, alias };
 }
 
@@ -137,7 +138,7 @@ export function configureRenderedIndent(
     });
 }
 
-
+// Get the editor and cursor position
 export function getEditorData(app: App): EditorData {
     const editor: Editor | undefined = app.workspace.activeEditor?.editor
     const cursorPos: EditorPosition | undefined = editor?.getCursor();
@@ -145,24 +146,29 @@ export function getEditorData(app: App): EditorData {
     return { editor, cursorPos }
 }
 
+// Escape special characters in a string for use in a regular expression
 export function escapeRegExp(string: string): string {
     return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Check if a string is a regex pattern
 export function isRegexPattern(string: string): boolean {
     // Checks if the string starts and ends with '/'
     return /^\/.*\/$/.test(string);
 }
 
+// Check if a string is a valid heading level
 export function isHeadingLevel(value: any): value is HeadingLevel {
     return [1, 2, 3, 4, 5, 6].includes(value);
 }
 
+// Check if a value is an object that can be merged
 function isMergeableObject(value: any): boolean {
     return value && typeof value === 'object' && !Array.isArray(value);
 }
 
-export function deepMerge<T>(target: Partial<T>, source: Partial<T>): T {
+// Deep merge two objects
+export function deepMerge<T>(target: Partial<T>, source: Partial<T>, dedupeArrays = true): T {
     if (isMergeableObject(target) && isMergeableObject(source)) {
         for (const key of Object.keys(source) as Array<keyof T>) {
             const targetValue = target[key];
@@ -175,7 +181,11 @@ export function deepMerge<T>(target: Partial<T>, source: Partial<T>): T {
                 
                 deepMerge(target[key] as any, sourceValue as any);
             } else if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-                (target as any)[key] = [...new Set([...targetValue, ...sourceValue])];
+                if (dedupeArrays) {
+                    (target as any)[key] = [...new Set([...targetValue, ...sourceValue])];
+                } else {
+                    (target as any)[key] = [...targetValue, ...sourceValue];
+                }
             } else {
                 (target as any)[key] = sourceValue;
             }
