@@ -49,7 +49,6 @@ export default class InstaTocPlugin extends Plugin {
 			"insta-toc",
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> => {
 				if (!this.hasTocBlock) {
-					console.log('processor setting hasTocBlock to true.')
 					this.hasTocBlock = true;
 				}
 
@@ -119,7 +118,7 @@ export default class InstaTocPlugin extends Plugin {
 			this.app.metadataCache.offref(this.modifyEventRef);
 		}
 
-		this.setDebouncer(); // Set the debouncer
+		this.setDebouncer();
 		
 		// Register the new event listener with the updated debounce delay
 		this.modifyEventRef = this.app.metadataCache.on(

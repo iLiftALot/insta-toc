@@ -249,7 +249,7 @@ export class Validator {
                         !heading.heading.match(/<!--\s*omit\s*-->/) &&
                         // Omit headings included within local "omit" setting
                         !this.localTocSettings.omit.includes(heading.heading) &&
-                        // Omit headings with levels outside of the specific local min/max setting
+                        // Omit headings with levels outside of the specified local min/max setting
                         heading.level >= this.localTocSettings.levels.min &&
                         heading.level <= this.localTocSettings.levels.max
                     );
