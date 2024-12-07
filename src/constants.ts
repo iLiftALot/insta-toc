@@ -37,7 +37,7 @@ export const defaultLocalSettings: LocalTocSettings = {
     },
     exclude: "",
     style: {
-        listType: "dash"
+        listType: "dash",
     },
     omit: [],
     levels: {

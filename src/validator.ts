@@ -12,10 +12,9 @@ import { LocalTocSettings, ValidatedInstaToc, ValidCacheType } from "./types";
 import InstaTocPlugin from "./main";
 import { deepMerge, escapeRegExp, isHeadingLevel, isRegexPattern } from "./Utils";
 
-
 export class Validator {
     private plugin: InstaTocPlugin;
-    private previousHeadings: HeadingCache[] | undefined;
+    private previousHeadings: HeadingCache[] = [];
 
     public editor: Editor;
     public cursorPos: EditorPosition;
@@ -23,6 +22,7 @@ export class Validator {
 
     public fileHeadings: HeadingCache[];
     public localTocSettings: LocalTocSettings;
+    public updatedLocalSettings: LocalTocSettings | undefined;
     public metadata: CachedMetadata;
     public instaTocSection: SectionCache;
 
@@ -50,31 +50,30 @@ export class Validator {
         this.metadata = metadata;
         this.editor = editor;
         this.cursorPos = cursorPos;
-        this.localTocSettings = defaultLocalSettings;
     }
 
     // Method to compare current headings with previous headings
     private haveHeadingsChanged(): boolean {
         const currentHeadings: HeadingCache[] = this.metadata.headings || [];
+        const noPrevHeadings: boolean = this.previousHeadings.length === 0;
+        const diffHeadingsLength: boolean = currentHeadings.length !== this.previousHeadings.length;
 
-        if (!this.previousHeadings) {
-            this.previousHeadings = currentHeadings;
-            return true;
-        }
-
-        const noHeadingsChange: boolean = currentHeadings.every(
-            (headingCache: HeadingCache, index: number) => {
-                return (
-                    headingCache.heading === this.previousHeadings![index].heading &&
-                    headingCache.level === this.previousHeadings![index].level
-                );
-            }
-        );
+        const noHeadingsChange: boolean = noPrevHeadings || diffHeadingsLength
+            ? false
+            : currentHeadings.every(
+                (headingCache: HeadingCache, index: number) => {
+                    return (
+                        headingCache.heading === this.previousHeadings[index].heading &&
+                        headingCache.level === this.previousHeadings[index].level
+                    );
+                }
+            );
 
         if (noHeadingsChange) return false;
 
         // Headings have changed, update previousHeadings
         this.previousHeadings = currentHeadings;
+
         return true;
     }
 
@@ -144,8 +143,12 @@ export class Validator {
         try {
             parsedYml = parseYaml(yml);
         } catch (err) {
-            console.error('Invalid YAML in insta-toc settings:\n', err);
-            this.localTocSettings = { ...defaultLocalSettings };
+            this.localTocSettings = this.updatedLocalSettings || this.localTocSettings;
+            const errMsg = 'Invalid YAML in insta-toc settings:\n' + err;
+
+            console.error(errMsg);
+            new Notice(errMsg);
+
             return;
         }
 
@@ -154,10 +157,12 @@ export class Validator {
         // Validate and assign 'title'
         if (parsedYml.title !== undefined) {
             const title = parsedYml.title;
+            
             if (typeof title !== 'object' || title === null) {
                 validationErrors.push("'title' must be an object.");
             } else {
                 const { name, level } = title;
+                
                 if (name !== undefined && typeof name !== 'string') {
                     validationErrors.push("'title.name' must be a string indicating the title to be displayed on the ToC.");
                 }
@@ -177,10 +182,12 @@ export class Validator {
         // Validate and assign 'style'
         if (parsedYml.style !== undefined) {
             const style = parsedYml.style;
+            
             if (typeof style !== 'object' || style === null) {
                 validationErrors.push("'style' must be an object.");
             } else {
                 const { listType } = style;
+                
                 if (listType !== undefined && !['dash', 'number'].includes(listType)) {
                     validationErrors.push("'style.listType' must be 'dash' or 'number'.");
                 }
@@ -209,12 +216,15 @@ export class Validator {
                 validationErrors.push("'levels' must be an object.");
             } else {
                 const { min, max } = levels;
+                
                 if (min !== undefined && !isHeadingLevel(min)) {
                     validationErrors.push("'levels.min' must be an integer between 1 and 6 indicating the minimum heading level to include.");
                 }
+                
                 if (max !== undefined && !isHeadingLevel(max)) {
                     validationErrors.push("'levels.max' must be an integer between 1 and 6 indicating the maximum heading level to include.");
                 }
+                
                 if (min !== undefined && max !== undefined && min > max) {
                     validationErrors.push("'levels.min' cannot be greater than 'levels.max'.");
                 }
@@ -227,11 +237,17 @@ export class Validator {
             console.error(validationErrorMsg);
             new Notice(validationErrorMsg);
 
-            this.localTocSettings = defaultLocalSettings;
+            this.updatedLocalSettings = this.localTocSettings;
         } else {
-            // All validations passed; merge with defaults
-            this.localTocSettings = deepMerge(defaultLocalSettings, parsedYml);
+            // All validations passed; merge
+            if (!this.updatedLocalSettings) {
+                this.updatedLocalSettings = deepMerge(this.localTocSettings, parsedYml, true);
+            } else {
+                this.updatedLocalSettings = deepMerge(this.updatedLocalSettings, parsedYml, false);
+            }
         }
+
+        this.localTocSettings = this.updatedLocalSettings;
     }
 
     private cursorInToc(): boolean {
@@ -251,7 +267,9 @@ export class Validator {
                         !this.localTocSettings.omit.includes(heading.heading) &&
                         // Omit headings with levels outside of the specified local min/max setting
                         heading.level >= this.localTocSettings.levels.min &&
-                        heading.level <= this.localTocSettings.levels.max
+                        heading.level <= this.localTocSettings.levels.max &&
+                        // Exlcude empty headings
+                        heading.heading.trim().length > 0
                     );
                 })
                 .map((heading: HeadingCache) => {

@@ -8,7 +8,8 @@ import {
 	Plugin,
 	PluginManifest,
 	TFile,
-	debounce
+	debounce,
+	stringifyYaml
 } from 'obsidian';
 import { deepmerge } from 'deepmerge-ts';
 import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
@@ -57,8 +58,10 @@ export default class InstaTocPlugin extends Plugin {
 				const file: TFile = this.app.vault.getAbstractFileByPath(pathWithFileExtension) as TFile;
 				// TOC codeblock content
 				const lines: string[] = source
-					.replace(localTocSettingsRegex, '') // Process only the ToC content without local settings
+					// Process only the ToC content without local settings
+					.replace(localTocSettingsRegex, '')
 					.split('\n');
+
 				const headingLevels: number[] = []; // To store heading levels corresponding to each line
 
 				// Process the codeblock text by converting each line into a markdown link list item

@@ -48,6 +48,9 @@ export class ManageToc {
         for (const headingCache of fileHeadings) {
             const headingLevel = headingCache.level;
             const headingText = headingCache.heading;
+
+            if (headingText.length === 0) continue;
+
             const currentIndentLevel = this.getIndentationLevel(headingLevel);
 
             // Initialize numbering for this level if not already
@@ -93,6 +96,9 @@ export class ManageToc {
         for (const headingCache of fileHeadings) {
             const headingLevel: number = headingCache.level;
             const headingText: string = headingCache.heading;
+
+            if (headingText.length === 0) continue;
+
             const currentIndentLevel = this.getIndentationLevel(headingLevel);
 
             // Calculate the indentation based on the current indentation level

@@ -182,9 +182,9 @@ export function deepMerge<T>(target: Partial<T>, source: Partial<T>, dedupeArray
                 deepMerge(target[key] as any, sourceValue as any);
             } else if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
                 if (dedupeArrays) {
-                    (target as any)[key] = [...new Set([...targetValue, ...sourceValue])];
+                    (target as any)[key] = [...new Set(targetValue.concat(sourceValue))];
                 } else {
-                    (target as any)[key] = [...targetValue, ...sourceValue];
+                    (target as any)[key] = sourceValue;
                 }
             } else {
                 (target as any)[key] = sourceValue;

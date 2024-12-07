@@ -4,7 +4,8 @@ import {
     PluginSettingTab,
     Setting,
     SliderComponent,
-    TextAreaComponent
+    TextAreaComponent,
+    TextComponent
 } from 'obsidian';
 import InstaToc from './main';
 import { BulletTypes } from './constants';
@@ -23,6 +24,12 @@ export class SettingTab extends PluginSettingTab {
         const { containerEl } = this;
 
         containerEl.empty();
+
+        const tabTitle = new Setting(containerEl)
+            .setHeading()
+            .setName('Insta ToC Global Settings');
+        tabTitle.nameEl.classList.add('setting-title');
+        tabTitle.controlEl.remove();
 
         new Setting(containerEl)
             .setName('List bullet style')
@@ -66,6 +73,18 @@ export class SettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                         this.plugin.updateModifyEventListener();
                     })
+            });
+
+        new Setting(containerEl)
+            .setName('ToC Title')
+            .setDesc('The global title of the generated Table of Contents.')
+            .addText((component: TextComponent) => {
+                component
+                    .setValue(this.plugin.settings.tocTitle)
+                    .onChange(async (value: string) => {
+                        this.plugin.settings.tocTitle = value;
+                        await this.plugin.saveSettings();
+                    });
             });
 
         new Setting(containerEl)

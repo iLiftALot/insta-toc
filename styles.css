@@ -17,3 +17,9 @@
     font-size: larger;
     font-weight: bolder;
 }
+
+.setting-title {
+    display: flex;
+    justify-content: center;
+    font-size: xx-large;
+}
