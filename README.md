@@ -25,7 +25,9 @@
 There are various other ToC plugins for Obsidian, however, they come with certain limitations which this plugin aims to mitigate and improve upon which includes:
 
 **Seamless Integration & Dynamic Generation**
-- Just insert the code block and start typing. There's nothing more to it. Other ToC plugins generate the ToC via command activation. This plugin is designed for performance and simplicity for maximum convenience and organization with no hassle.
+- Just insert the code block and start typing. There's nothing more to it.
+- Other ToC plugins generate the ToC via command activation.
+- This plugin is designed for performance and simplicity for maximum convenience and organization.
 
 **Omit Specific Headings**
 - Exclude any heading you want from the ToC by simply adding `<!-- omit -->` to the end of the heading.
@@ -33,10 +35,11 @@ There are various other ToC plugins for Obsidian, however, they come with certai
 
 **HTML & Special Symbols**
 - Feel free to include HTML or any kind of special symbols within headings. This plugin will handle these cases elegantly.
-- Alternatively, specify which characters should be escaped within the local settings.
+- You can additionally specify which characters should be escaped within the local settings.
 
 **Heading Hierarchy Handling**
-- Include any type of heading hierarchy you want. Your heading structure doesn't have to be any certain way. Other plugins will prohibit the ToC insertion if the heading hierachy.
+- Include any type of heading hierarchy you want. Your heading structure doesn't have to be any certain way.
+- Other plugins will prohibit the ToC insertion if the heading hierachy is not in a particular optimal format.
 
 **Markdown Links & Wiki-Links**
 - This plugin will handle multiple of both markdown links (`[Title]\(https://link)`) and wiki-links (`[[file-name.md]]`) within headings.
@@ -44,10 +47,14 @@ There are various other ToC plugins for Obsidian, however, they come with certai
 **Settings**<br>
 <ul>
   <li><u style="color: orange;">Bullet Style</u> - Select your preferred list-bullet style within the settings tab.</li>
+
   <li><u style="color: orange;">Update Delay</u> - Configure the delay between ToC updates.</li>
-  <li><u style="color: orange;">Excluded Characters</u> - Specify which characters should be escaped within headings.</li>
+
+  <li><u style="color: orange;">Exclusions</u> - You will have multiple custimization choices pertaining to exlcuding specific heading text, individual characters, and heading levels.</li>
+
   <li><u style="color: orange;">Indentation Width</u> - Determine your preferred amount of indentation spacing.</li>
-  <li><a href="https://github.com/iLiftALot/insta-toc?tab=readme-ov-file#usage">Local Settings</a></li>
+
+  <li><u><a href="https://github.com/iLiftALot/insta-toc?tab=readme-ov-file#usage">Local File Settings</a></u></li>
 </ul>
 
 
@@ -68,7 +75,6 @@ There are various other ToC plugins for Obsidian, however, they come with certai
   ```
 
 - Alternatively, utilize the local settings:
-  
     ```yml
     ---
     omit: [
@@ -78,7 +84,23 @@ There are various other ToC plugins for Obsidian, however, they come with certai
     ---
     ```
 
+  <center>↕️&nbsp;&nbsp;&nbsp;&nbsp;↕️&nbsp;&nbsp;&nbsp;&nbsp;↕️&nbsp;&nbsp;&nbsp;&nbsp;↕️</center>
+
+    ```yml
+    ---
+    omit:
+      - Heading 1
+      - Heading 2
+    ---
+    ```
+---
+
 **Local ToC Settings Guide**
+> <center style="font-size: large; color: red;"><b>⚠️ <u>FORMAT CAUTION</u> ⚠️</b></center>
+> 
+> The local settings use <b style="color: yellow;"><u>YAML formatting</u></b>, which is a format that is very particular about perfect spacing.
+> I'll be implementing auto-correction logic soon to account for this, but for the time being ensure that you are <b style="color: yellow;"><u>only indenting with 2 spaces</u></b>, otherwise you will get errors.
+
 - Type Guide:
   ```yml
   ---
@@ -86,7 +108,9 @@ There are various other ToC plugins for Obsidian, however, they come with certai
     name: [string: any]
       - The title of the ToC.
     level: [number: 1 | 2 | 3 | 4 | 5 | 6]
-      - The heading level of the title
+      - The heading level of the title.
+    center: [boolean: true | false]
+      - Optionally center position of the title.
   exclude: [string: any | RegExp: /.../]
     - Exclude specific headings based on a string of characters (e.g., ",._-+=") or a regular expression (e.g., /[^a-zA-Z0-9]/).
     - NOTE: Currently, this will include global excluded characters as well.
@@ -103,12 +127,13 @@ There are various other ToC plugins for Obsidian, however, they come with certai
   ---
   ```
 
-- Example:
+- Example 1:
   ```yml
   ---
   title:
     name: "Table of Contents"
     level: 2
+    center: false
   exclude: ",._-+"
   style:
     listType: "dash"
@@ -119,6 +144,25 @@ There are various other ToC plugins for Obsidian, however, they come with certai
   levels:
     min: 1
     max: 3
+  ---
+  ```
+
+- Example 2:
+  ```yml
+  ---
+  title:
+    name: "Table of Contents"
+    level: 1
+    center: true
+  exclude: /[^a-zA-Z0-9]/
+  style:
+    listType: number
+  omit:
+    - Heading 3
+    - Heading 4
+  levels:
+    min: 2
+    max: 6
   ---
   ```
 
@@ -194,7 +238,7 @@ npm install insta-toc
   <ul>
       <li><input type="checkbox">PDF</input></li>
       <li><input type="checkbox">HTML</input></li>
-      <input type="checkbox">Markdown</input></li>
+      <li><input type="checkbox">Markdown</input></li>
       <li><input type="checkbox">...</input></li>
   </ul>
 </ul>

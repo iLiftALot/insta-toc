@@ -7,10 +7,10 @@ import {
     parseYaml,
     EditorRange
 } from "obsidian";
-import { defaultLocalSettings, instaTocCodeBlockId, localTocSettingsRegex } from "./constants";
-import { LocalTocSettings, ValidatedInstaToc, ValidCacheType } from "./types";
-import InstaTocPlugin from "./main";
+import { getDefaultLocalSettings, instaTocCodeBlockId, localTocSettingsRegex } from "./constants";
+import { HeadingLevel, LocalTocSettings, ValidatedInstaToc, ValidCacheType } from "./types";
 import { deepMerge, escapeRegExp, isHeadingLevel, isRegexPattern } from "./Utils";
+import InstaTocPlugin from "./main";
 
 export class Validator {
     private plugin: InstaTocPlugin;
@@ -36,7 +36,7 @@ export class Validator {
         this.metadata = metadata;
         this.editor = editor;
         this.cursorPos = cursorPos;
-        this.localTocSettings = defaultLocalSettings;
+        this.localTocSettings = getDefaultLocalSettings();
     }
 
     // Method to update the validator properties while maintaining the previous state
@@ -161,13 +161,18 @@ export class Validator {
             if (typeof title !== 'object' || title === null) {
                 validationErrors.push("'title' must be an object.");
             } else {
-                const { name, level } = title;
+                const { name, level, center } = title;
                 
                 if (name !== undefined && typeof name !== 'string') {
                     validationErrors.push("'title.name' must be a string indicating the title to be displayed on the ToC.");
                 }
+
                 if (level !== undefined && !isHeadingLevel(level)) {
                     validationErrors.push("'title.level' must be an integer between 1 and 6 indicating the heading level of the ToC title.");
+                }
+
+                if (center !== undefined && !(typeof center === 'boolean')) {
+                    validationErrors.push("'title.center' must be a boolean indicating whether the title position should be centered.");
                 }
             }
         }
@@ -241,9 +246,17 @@ export class Validator {
         } else {
             // All validations passed; merge
             if (!this.updatedLocalSettings) {
-                this.updatedLocalSettings = deepMerge(this.localTocSettings, parsedYml, true);
+                this.updatedLocalSettings = deepMerge<LocalTocSettings>(
+                    this.localTocSettings,
+                    parsedYml,
+                    true
+                );
             } else {
-                this.updatedLocalSettings = deepMerge(this.updatedLocalSettings, parsedYml, false);
+                this.updatedLocalSettings = deepMerge<LocalTocSettings>(
+                    this.updatedLocalSettings,
+                    parsedYml,
+                    false
+                );
             }
         }
 
@@ -260,16 +273,23 @@ export class Validator {
             // Store the file headings to reference in later code
             this.fileHeadings = this.metadata.headings
                 .filter((heading: HeadingCache) => {
+                    const headingText: string = heading.heading.trim();
+                    const headingLevel = heading.level as HeadingLevel;
+
                     return (
                         // Omit headings with "<!-- omit -->"
-                        !heading.heading.match(/<!--\s*omit\s*-->/) &&
+                        !headingText.match(/<!--\s*omit\s*-->/) &&
                         // Omit headings included within local "omit" setting
-                        !this.localTocSettings.omit.includes(heading.heading) &&
+                        !this.localTocSettings.omit.includes(headingText) &&
                         // Omit headings with levels outside of the specified local min/max setting
-                        heading.level >= this.localTocSettings.levels.min &&
-                        heading.level <= this.localTocSettings.levels.max &&
-                        // Exlcude empty headings
-                        heading.heading.trim().length > 0
+                        headingLevel >= this.localTocSettings.levels.min &&
+                        headingLevel <= this.localTocSettings.levels.max &&
+                        // Omit empty headings
+                        headingText.trim().length > 0 &&
+                        // Omit heading text specified in the global exclude setting
+                        !this.plugin.settings.excludedHeadingText.includes(headingText) &&
+                        // Omit heading levels specified in the global exclude setting
+                        !this.plugin.settings.excludedHeadingLevels.includes(headingLevel)
                     );
                 })
                 .map((heading: HeadingCache) => {
@@ -343,6 +363,7 @@ export class Validator {
         // If the headings have not changed, skip processing
         if (!headingsChanged) return false;
 
+        // Process and store data for later use
         this.setTocInsertPos();
         this.configureLocalSettings();
         this.setFileHeadings();

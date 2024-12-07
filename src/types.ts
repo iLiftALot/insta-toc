@@ -1,10 +1,17 @@
-import { CachedMetadata, Editor, EditorPosition, EditorRange, HeadingCache, SectionCache } from "obsidian";
+import {
+    CachedMetadata,
+    Editor,
+    EditorPosition,
+    EditorRange,
+    HeadingCache,
+    SectionCache
+} from "obsidian";
 
 // Interface asserts that HeadingCache[] and SectionCache[]
 // are not undefined within the CachedMetadata type
 export interface ValidCacheType extends CachedMetadata {
-    headings: HeadingCache[],
-    sections: SectionCache[]
+    headings: HeadingCache[];
+    sections: SectionCache[];
 }
 
 // Type that represents a fully validated Validator instance
@@ -31,13 +38,13 @@ export type UpdateDelay = 500 | 1000
     | 7500 | 8000 | 8500 | 9000 | 9500 | 10000
 
 export type TocData = {
-    fileHeadings: HeadingCache[],
-    instaTocSection: SectionCache | undefined
+    fileHeadings: HeadingCache[];
+    instaTocSection: SectionCache | undefined;
 }
 
 export type HandledLink = {
-    contentText: string,
-    alias: string
+    contentText: string;
+    alias: string;
 }
 export type ListItemContext = {
     indent: string;
@@ -51,7 +58,8 @@ export type LocalTocStyle = {
 }
 export type LocalTocTitle = {
     name: string;
-    level: HeadingLevel
+    level: HeadingLevel;
+    center: boolean;
 }
 export type LocalTocLevels = {
     min: HeadingLevel;
@@ -62,5 +70,5 @@ export interface LocalTocSettings {
     exclude: string;
     style: LocalTocStyle;
     omit: string[];
-    levels: LocalTocLevels
+    levels: LocalTocLevels;
 };

@@ -1,11 +1,11 @@
 name: Release and Publish
 
 on:
-  push:
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
     branches:
-      - 'master'
+      - master
+    types:
+      - closed
   workflow_dispatch:
     inputs:
       version_type:
@@ -23,6 +23,13 @@ permissions:
 
 jobs:
   release:
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.base.ref == 'master'
+      )
+    
     runs-on: ubuntu-latest
 
     steps:
