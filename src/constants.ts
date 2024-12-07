@@ -1,4 +1,6 @@
+import InstaTocPlugin from "./main";
 import { LocalTocSettings } from "./types";
+import { MergicianOptions } from "mergician";
 
 export const instaTocCodeBlockId = 'insta-toc';
 
@@ -30,18 +32,30 @@ export const BulletTypes = {
 }
 export const DefaultExcludedChars: string[] = ['*', '_', '`', '==', '~~', '{', '}', '#', '\\'];
 
-export const defaultLocalSettings: LocalTocSettings = {
-    title: {
-        name: "Table of Contents",
-        level: 1
-    },
-    exclude: "",
-    style: {
-        listType: "dash",
-    },
-    omit: [],
-    levels: {
-        min: 1,
-        max: 6
-    }
-};
+export const mergicianSettings: MergicianOptions = {
+    onlyCommonKeys: false,
+    onlyUniversalKeys: false,
+    skipCommonKeys: false,
+    skipUniversalKeys: false,
+    dedupArrays: true,
+    sortArrays: true
+}
+
+export function getDefaultLocalSettings(): LocalTocSettings {
+    return {
+        title: {
+            name: InstaTocPlugin.getGlobalSetting<'tocTitle'>('tocTitle') ?? 'Table of Contents',
+            level: 1,
+            center: false
+        },
+        exclude: "",
+        style: {
+            listType: InstaTocPlugin.getGlobalSetting<'bulletType'>('bulletType') ?? BulletTypes.dash
+        },
+        omit: [],
+        levels: {
+            min: 1,
+            max: 6
+        }
+    };
+}

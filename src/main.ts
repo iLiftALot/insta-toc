@@ -8,10 +8,10 @@ import {
 	Plugin,
 	PluginManifest,
 	TFile,
-	debounce,
-	stringifyYaml
+	debounce
 } from 'obsidian';
-import { deepmerge } from 'deepmerge-ts';
+import { mergicianSettings } from './constants';
+import { mergician } from 'mergician';
 import { InstaTocSettings, DEFAULT_SETTINGS } from './Settings';
 import { SettingTab } from './SettingsTab';
 import { ManageToc } from './ManageToc';
@@ -104,7 +104,7 @@ export default class InstaTocPlugin extends Plugin {
 		const settingsData: InstaTocSettings = await this.loadData();
 		
 		if (settingsData) {
-			mergedSettings = deepmerge(DEFAULT_SETTINGS, settingsData);
+			mergedSettings = mergician(mergicianSettings)(DEFAULT_SETTINGS, settingsData);
 		}
 
 		this.settings = mergedSettings;
@@ -165,5 +165,12 @@ export default class InstaTocPlugin extends Plugin {
 				}
 			}, this.settings.updateDelay, false
 		);
+	}
+
+	public static getGlobalSetting<K extends keyof InstaTocSettings>(key: K): InstaTocSettings[K] {
+		const plugin = (window as any).app.plugins.getPlugin('insta-toc') as InstaTocPlugin;
+		const settings = plugin?.settings as InstaTocSettings;
+
+		return settings[key];
 	}
 }
