@@ -80,7 +80,9 @@ export class ManageToc {
         }---\n\n${
             '#'.repeat(this.validator.localTocSettings.title.level)
         } ${
-            this.validator.localTocSettings.title.name
+            this.validator.localTocSettings.title.center
+                ? '<center>' + this.validator.localTocSettings.title.name + '</center>'
+                : this.validator.localTocSettings.title.name
         }\n\n${
             tocHeadingRefs.join('\n')
         }`;
@@ -115,7 +117,9 @@ export class ManageToc {
         }---\n\n${
             '#'.repeat(this.validator.localTocSettings.title.level)
         } ${
-            this.validator.localTocSettings.title.name
+            this.validator.localTocSettings.title.center
+                ? '<center>' + this.validator.localTocSettings.title.name + '</center>'
+                : this.validator.localTocSettings.title.name
         }\n\n${
             tocHeadingRefs.join('\n')
         }`;

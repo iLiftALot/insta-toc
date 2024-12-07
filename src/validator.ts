@@ -161,7 +161,7 @@ export class Validator {
             if (typeof title !== 'object' || title === null) {
                 validationErrors.push("'title' must be an object.");
             } else {
-                const { name, level } = title;
+                const { name, level, center } = title;
                 
                 if (name !== undefined && typeof name !== 'string') {
                     validationErrors.push("'title.name' must be a string indicating the title to be displayed on the ToC.");
@@ -169,6 +169,10 @@ export class Validator {
 
                 if (level !== undefined && !isHeadingLevel(level)) {
                     validationErrors.push("'title.level' must be an integer between 1 and 6 indicating the heading level of the ToC title.");
+                }
+
+                if (center !== undefined && !(typeof center === 'boolean')) {
+                    validationErrors.push("'title.center' must be a boolean indicating whether the title position should be centered.");
                 }
             }
         }

@@ -51,7 +51,8 @@ export type LocalTocStyle = {
 }
 export type LocalTocTitle = {
     name: string;
-    level: HeadingLevel
+    level: HeadingLevel;
+    center: boolean;
 }
 export type LocalTocLevels = {
     min: HeadingLevel;
