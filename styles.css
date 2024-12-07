@@ -16,10 +16,19 @@
 .exclude-chars {
     font-size: larger;
     font-weight: bolder;
+    width: 100%;
 }
 
 .setting-title {
     display: flex;
     justify-content: center;
     font-size: xx-large;
+}
+
+.insta-toc-text-info {
+    width: 33%;
+}
+
+.insta-toc-text-area {
+    width: 100%;
 }

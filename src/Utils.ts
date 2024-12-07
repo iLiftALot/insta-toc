@@ -99,7 +99,7 @@ export function cleanAlias(aliasText: string, plugin?: InstaTocPlugin, exclChars
     return alias;
 }
 
-// Configure indentation for the insta-toc codeblock element post-render
+// Configure indentation for the insta-toc code block HTML element, post-render
 export function configureRenderedIndent(
     el: HTMLElement,
     headingLevels: number[],
@@ -116,6 +116,7 @@ export function configureRenderedIndent(
         }
 
         const subList: HTMLUListElement | HTMLOListElement | null = listItem.querySelector('ul, ol');
+
         if (subList) {
             // List item has children
             const toggleButton: HTMLButtonElement = document.createElement('button');
