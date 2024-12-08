@@ -1,9 +1,21 @@
-name: test
+name: Test
 
-on: push
+on:
+  pull_request:
+    branches:
+      - master
+    types:
+      - closed
+  workflow_dispatch:
 
 jobs:
   build:
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.merged == true &&
+        github.event.pull_request.base.ref == 'master'
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 1
     

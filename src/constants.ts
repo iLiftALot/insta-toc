@@ -14,7 +14,7 @@ export const wikiLinkWithAliasRegex: RegExp = /\[\[([^\]]+)\|([^\]]+)\]\]/g;
 export const wikiLinkNoAliasRegex: RegExp = /\[\[([^\]\|]+)\]\]/g;
 
 // Extracts path/link and alias from headings with regular markdown links
-export const markdownLinkRegex: RegExp = /\[([^\]]+)\]\([^)]+\)/g;
+export const markdownLinkRegex: RegExp = /\[([^\]]*)\]\([^)]+\)/g;
 
 // Replaces tags in headings
 export const tagLinkRegex: RegExp = /(#)([/\-_\w][^\s]*)/g;
