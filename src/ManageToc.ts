@@ -148,9 +148,6 @@ export class ManageToc {
                 break;
         }
 
-        // Set the flag to indicate plugin-initiated changes
-        this.plugin.isPluginEdit = true;
-
         // Replace the old TOC with the updated TOC
         this.validator.editor.replaceRange(
             newTocBlock, tocInsertRange.from, tocInsertRange.to
