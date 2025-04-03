@@ -98,22 +98,21 @@ export class SettingTab extends PluginSettingTab {
             .setName('Excluded heading text')
             .setDesc('Comma-separated list of headings to exclude globally within the Table of Contents.')
             .addTextArea((component: TextAreaComponent) => {
-                component
-                    .setValue(this.plugin.settings.excludedHeadingText.join(','))
-                    .onChange(async (value: string) => {
-                        const textValue = component.getValue();
-                        const excludedHeadingText = [
-                            ...this.plugin.settings.excludedHeadingText
-                        ].concat(
-                            textValue
-                                .replace(/^,/, '').replace(/,$/, '')
-                                .split(',')
-                                .map((value: string) => value.trim())
-                        );
+                component.setValue(this.plugin.settings.excludedHeadingText.join(','));
 
-                        this.plugin.settings.excludedHeadingText = [...excludedHeadingText];
-                        await this.plugin.saveSettings();
-                    });
+                // Update settings when the text area loses focus
+                component.inputEl.addEventListener('blur', async () => {
+                    const textValue = component.getValue();
+                    const excludedHeadingText = textValue.trim()
+                        .replace(/^,/, '')
+                        .replace(/,$/, '')
+                        .split(',')
+                        .map((value: string) => value.trim())
+                        .filter((value: string) => value.length > 0);
+
+                    this.plugin.settings.excludedHeadingText = excludedHeadingText;
+                    await this.plugin.saveSettings();
+                });
 
                 component.inputEl.placeholder = 'Table of Contents,Introduction,Side Note';
                 component.inputEl.classList.add('insta-toc-text-area');
