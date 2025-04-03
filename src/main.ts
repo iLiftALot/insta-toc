@@ -29,7 +29,6 @@ export default class InstaTocPlugin extends Plugin {
 	private debouncer: Debouncer<[fileCache: CachedMetadata], void>;
 
 	// Flags to maintain state with updates
-	public isPluginEdit = false;
 	public hasTocBlock = true;
 
 	public getDelay = () => this.settings.updateDelay;
@@ -140,12 +139,6 @@ export default class InstaTocPlugin extends Plugin {
 	public setDebouncer(): void {
 		this.debouncer = debounce(
 			(fileCache: CachedMetadata) => {
-				// Ignore updates performed by ManageToc.ts
-				if (this.isPluginEdit) {
-					this.isPluginEdit = false;
-					return;
-				}
-
 				const { editor, cursorPos }: EditorData = getEditorData(this.app);
 
 				if (!editor || !cursorPos) return;
