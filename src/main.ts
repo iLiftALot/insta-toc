@@ -24,7 +24,6 @@ import { Validator } from './validator';
 export default class InstaTocPlugin extends Plugin {
 	public app: App;
 	public settings: InstaTocSettings;
-	public activeFile: TFile | null = null;
 	private validator: Validator | undefined;
 	private modifyEventRef: EventRef | undefined;
 	private debouncer: Debouncer<[fileCache: CachedMetadata], void>;
