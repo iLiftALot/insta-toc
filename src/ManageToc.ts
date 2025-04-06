@@ -1,4 +1,5 @@
 import {
+    App,
     EditorRange,
     HeadingCache,
     stringifyYaml
@@ -8,14 +9,19 @@ import { instaTocCodeBlockId } from './constants';
 import { Validator } from './validator';
 
 export class ManageToc {
+    private app: App;
     private plugin: InstaTocPlugin;
     private validator: Validator;
     private headingLevelStack: number[];
+    private hasSmartList: boolean = false;
+    private isNumberedToc: boolean = false;
 
     constructor(
+        app: App,
         plugin: InstaTocPlugin,
         validator: Validator
     ) {
+        this.app = app;
         this.plugin = plugin;
         this.validator = validator;
         this.headingLevelStack = [];
@@ -127,6 +133,30 @@ export class ManageToc {
         return `\`\`\`${tocContent}\n\`\`\``;
     }
 
+    // Workaround for the smart list number order bug
+    private insertTocBlock(
+        newTocBlock: string,
+        tocInsertRange: EditorRange
+    ): void {
+        const smartListEnabled: boolean = this.app.vault.config.smartIndentList === true;
+
+        if (smartListEnabled && this.isNumberedToc) {
+            this.hasSmartList = true;
+            this.app.vault.setConfig('smartIndentList', false);
+        }
+
+        // Replace the old TOC with the updated TOC
+        this.validator.editor.replaceRange(
+            newTocBlock, tocInsertRange.from, tocInsertRange.to
+        );
+
+        if (this.hasSmartList) {
+            this.hasSmartList = false;
+            this.isNumberedToc = false;
+            this.app.vault.setConfig('smartIndentList', true);
+        }
+    }
+
     // Dynamically update the TOC
     private updateAutoToc(): void {
         const tocInsertRange: EditorRange = this.validator.tocInsertPos;
@@ -142,15 +172,14 @@ export class ManageToc {
                 break;
             case "number":
                 newTocBlock = this.generateNumberedToc();
+                this.isNumberedToc = true;
                 break;
             default:
                 newTocBlock = this.generateNormalToc();
                 break;
         }
 
-        // Replace the old TOC with the updated TOC
-        this.validator.editor.replaceRange(
-            newTocBlock, tocInsertRange.from, tocInsertRange.to
-        );
+        // Workaround for the smart list number order bug
+        this.insertTocBlock(newTocBlock, tocInsertRange);
     }
 }
