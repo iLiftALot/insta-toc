@@ -154,7 +154,7 @@ export default class InstaTocPlugin extends Plugin {
 
 				if (isValid) {
 					// Handle all active file changes for the insta-toc plaintext content
-					new ManageToc(this, this.validator);
+					new ManageToc(this.app, this, this.validator);
 				}
 			}, this.settings.updateDelay, false
 		);
