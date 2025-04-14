@@ -138,23 +138,10 @@ export class ManageToc {
         newTocBlock: string,
         tocInsertRange: EditorRange
     ): void {
-        const smartListEnabled: boolean = this.app.vault.config.smartIndentList === true;
-
-        if (smartListEnabled && this.isNumberedToc) {
-            this.hasSmartList = true;
-            this.app.vault.setConfig('smartIndentList', false);
-        }
-
         // Replace the old TOC with the updated TOC
         this.validator.editor.replaceRange(
             newTocBlock, tocInsertRange.from, tocInsertRange.to
         );
-
-        if (this.hasSmartList) {
-            this.hasSmartList = false;
-            this.isNumberedToc = false;
-            this.app.vault.setConfig('smartIndentList', true);
-        }
     }
 
     // Dynamically update the TOC
