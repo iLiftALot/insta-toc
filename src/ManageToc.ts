@@ -9,19 +9,14 @@ import { instaTocCodeBlockId } from './constants';
 import { Validator } from './validator';
 
 export class ManageToc {
-    private app: App;
     private plugin: InstaTocPlugin;
     private validator: Validator;
     private headingLevelStack: number[];
-    private hasSmartList: boolean = false;
-    private isNumberedToc: boolean = false;
 
     constructor(
-        app: App,
         plugin: InstaTocPlugin,
         validator: Validator
     ) {
-        this.app = app;
         this.plugin = plugin;
         this.validator = validator;
         this.headingLevelStack = [];
@@ -159,7 +154,6 @@ export class ManageToc {
                 break;
             case "number":
                 newTocBlock = this.generateNumberedToc();
-                this.isNumberedToc = true;
                 break;
             default:
                 newTocBlock = this.generateNormalToc();
