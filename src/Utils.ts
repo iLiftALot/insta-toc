@@ -169,7 +169,7 @@ function isMergeableObject(value: any): boolean {
 }
 
 // Deep merge two objects
-export function deepMerge<T>(target: Partial<T>, source: Partial<T>, dedupeArrays = true): T {
+export function deepMerge<T extends object>(target: Partial<T>, source: Partial<T>, dedupeArrays = true): T {
     if (isMergeableObject(target) && isMergeableObject(source)) {
         for (const key of Object.keys(source) as Array<keyof T>) {
             const targetValue = target[key];
