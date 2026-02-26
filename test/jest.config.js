@@ -1,18 +1,16 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} **/
 
-module.exports = {
-    testMatch: ["**/*.test.(ts|js)"],
-    testTimeout: 1000,
-    testEnvironment: "node",
-    transform: {
-        "^.+\\.tsx?$": "ts-jest", // Use ts-jest to transform TS files
-    },
-    transformIgnorePatterns: [
-        "/node_modules/(?!obsidian/)", // Transpile the `obsidian` package
-    ],
-    extensionsToTreatAsEsm: [".ts"],
-    moduleNameMapper: {
-        '^obsidian$': '../node_modules/obsidian/obsidian',
-    },
-    moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+export const testMatch = ["**/*.test.(ts|js)"];
+export const testTimeout = 1000;
+export const testEnvironment = "node";
+export const transform = {
+    "^.+\\.tsx?$": "ts-jest", // Use ts-jest to transform TS files
 };
+export const transformIgnorePatterns = [
+    "/node_modules/(?!obsidian/)", // Transpile the `obsidian` package
+];
+export const extensionsToTreatAsEsm = [".ts"];
+export const moduleNameMapper = {
+    '^obsidian$': '../node_modules/obsidian/obsidian',
+};
+export const moduleFileExtensions = ["ts", "tsx", "js", "jsx", "json", "node"];

@@ -10,7 +10,8 @@
     "homepage": "https://github.com/iLiftALot/insta-toc#readme",
     "main": "dist/build/main.js",
     "scripts": {
-        "test": "jest --config=test/jest.config.js",
+    "test": "vitest run --config test/vitest.config.ts",
+    "test:watch": "vitest --ui --config test/vitest.config.ts",
         "dev:log": "node esbuild.config.mjs logger && terser -o dist/dev/main.js dist/dev/main.js",
         "dev": "node esbuild.config.mjs && terser -o dist/dev/main.js dist/dev/main.js",
         "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && terser -o dist/build/main.js dist/build/main.js",
