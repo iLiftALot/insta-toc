@@ -44,14 +44,14 @@ export function handleLinks(plugin: InstaTocPlugin, content: string): HandledLin
     let [contentText, alias]: string[] = [content, content];
 
     // Process Obsidian wiki links with alias
-    contentText = contentText.replace(wikiLinkWithAliasRegex, (_match: string, refPath: string | number, refAlias: string | number): string =>
+    contentText = contentText.replace(wikiLinkWithAliasRegex, (_match: string, refPath: string | number, refAlias: string | number): string => {
         // Text including [[wikilink|wikitext]] -> Text including wikilink wikitext
-        `${refPath} ${refAlias}`
-    );
-    alias = alias.replace(wikiLinkWithAliasRegex, (_match: string, _refPath: string | number, refAlias: string | number): string =>
+        return `${refPath} ${refAlias}`;
+    });
+    alias = alias.replace(wikiLinkWithAliasRegex, (_match: string, _refPath: string | number, refAlias: string | number): string => {
         // [[wikilink|wikitext]] -> wikitext
-        `${refAlias}`
-    );
+        return `${refAlias}`;
+    });
 
     // Process Obsidian wiki links without alias
     contentText = contentText.replace(wikiLinkNoAliasRegex, (_match: string, refPath: string | number): string => {
@@ -64,24 +64,28 @@ export function handleLinks(plugin: InstaTocPlugin, content: string): HandledLin
         // [[wikilink]] -> wikilink
         // OR
         // [[path/to/wikilink]] -> wikilink
-        return (refPath).split("/").pop() ?? refPath;
+        return String(refPath).split("/").pop() ?? String(refPath);
     });
 
     // Process markdown links
-    contentText = contentText.replace(markdownLinkRegex, (match, _refAlias) => {
+    contentText = contentText.replace(markdownLinkRegex, (match: string, _refAlias: string | number): string => {
         // Text including [Link](https://www.link.com) -> Text including [Link](https://www.link.com)
         return match;
     });
-    alias = alias.replace(markdownLinkRegex, (_match, refAlias) => {
+    alias = alias.replace(markdownLinkRegex, (_match: string, refAlias: string | number): string => {
         // [Link](https://www.link.com) -> Link
-        return refAlias;
+        return String(refAlias);
     });
 
     // Clean up tags
-    contentText = contentText.replace(tagLinkRegex, (_match, _symbol, tag) => { // Remove any tags
-        // Text including #a-tag -> Text including a-tag
-        return tag;
-    });
+    contentText = contentText.replace(
+        tagLinkRegex,
+        (_match: string, _symbol: string | number, tag: string | number): string => {
+            // Remove any tags
+            // Text including #a-tag -> Text including a-tag
+            return String(tag);
+        },
+    );
     // Process HTML and exluded characters
     alias = cleanAlias(alias, plugin);
     
