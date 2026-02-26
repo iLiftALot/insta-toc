@@ -36,6 +36,7 @@
         "@vitest/ui": "^4.0.18",
         "builtin-modules": "4.0.0",
         "esbuild": "^0.27.3",
+        "jsdom": "^28.1.0",
         "obsidian": "latest",
         "obsidian-dev-utils": "latest",
         "obsidian-typings": "latest",
