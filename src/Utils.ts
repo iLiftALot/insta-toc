@@ -44,41 +44,41 @@ export function handleLinks(plugin: InstaTocPlugin, content: string): HandledLin
     let [contentText, alias]: string[] = [content, content];
 
     // Process Obsidian wiki links with alias
-    contentText = contentText.replace(wikiLinkWithAliasRegex, (match, refPath, refAlias) => {
+    contentText = contentText.replace(wikiLinkWithAliasRegex, (_match: string, refPath: string | number, refAlias: string | number): string =>
         // Text including [[wikilink|wikitext]] -> Text including wikilink wikitext
-        return `${refPath} ${refAlias}`;
-    });
-    alias = alias.replace(wikiLinkWithAliasRegex, (match, refPath, refAlias) => {
+        `${refPath} ${refAlias}`
+    );
+    alias = alias.replace(wikiLinkWithAliasRegex, (_match: string, _refPath: string | number, refAlias: string | number): string =>
         // [[wikilink|wikitext]] -> wikitext
-        return refAlias;
-    });
+        `${refAlias}`
+    );
 
     // Process Obsidian wiki links without alias
-    contentText = contentText.replace(wikiLinkNoAliasRegex, (match, refPath) => {
+    contentText = contentText.replace(wikiLinkNoAliasRegex, (_match: string, refPath: string | number): string => {
         // Text including [[wikilink]] -> Text including wikilink
         // OR
         // Text including [[path/to/wikilink]] -> Text including wikilink
-        return refPath.split('/').pop() ?? refPath;
+        return String(refPath).split("/").pop() ?? String(refPath);
     });
-    alias = alias.replace(wikiLinkNoAliasRegex, (match, refPath) => {
+    alias = alias.replace(wikiLinkNoAliasRegex, (_match: string, refPath: string | number): string => {
         // [[wikilink]] -> wikilink
         // OR
         // [[path/to/wikilink]] -> wikilink
-        return refPath.split('/').pop() ?? refPath;
+        return (refPath).split("/").pop() ?? refPath;
     });
 
     // Process markdown links
-    contentText = contentText.replace(markdownLinkRegex, (match, refAlias) => {
+    contentText = contentText.replace(markdownLinkRegex, (match, _refAlias) => {
         // Text including [Link](https://www.link.com) -> Text including [Link](https://www.link.com)
         return match;
     });
-    alias = alias.replace(markdownLinkRegex, (match, refAlias) => {
+    alias = alias.replace(markdownLinkRegex, (_match, refAlias) => {
         // [Link](https://www.link.com) -> Link
         return refAlias;
     });
 
     // Clean up tags
-    contentText = contentText.replace(tagLinkRegex, (match, symbol, tag) => { // Remove any tags
+    contentText = contentText.replace(tagLinkRegex, (_match, _symbol, tag) => { // Remove any tags
         // Text including #a-tag -> Text including a-tag
         return tag;
     });
