@@ -276,9 +276,9 @@ export class Validator {
 
     private setFileHeadings(): void {
         // if (this.metadata.headings) {
-        const heading = this.metadata?.headings
+        const headings = this.metadata?.headings ?? [];
         // Store the file headings to reference in later code
-        this.fileHeadings = this.metadata.headings
+        this.fileHeadings = headings
             .filter((heading: HeadingCache) => {
                 const headingText: string = heading.heading.trim();
                 const headingLevel = heading.level as HeadingLevel;
