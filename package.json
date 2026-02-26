@@ -8,7 +8,7 @@
         "url": "git+https://github.com/iLiftALot/insta-toc.git"
     },
     "homepage": "https://github.com/iLiftALot/insta-toc#readme",
-    "main": "dist/dev/main.js",
+    "main": "dist/build/main.js",
     "scripts": {
         "test": "jest --config=test/jest.config.js",
         "dev:log": "node esbuild.config.mjs logger && terser -o dist/dev/main.js dist/dev/main.js",

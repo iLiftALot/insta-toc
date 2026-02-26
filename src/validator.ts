@@ -5,7 +5,8 @@ import {
     Editor,
     EditorPosition,
     parseYaml,
-    EditorRange
+    EditorRange,
+    Notice
 } from "obsidian";
 import { getDefaultLocalSettings, instaTocCodeBlockId, localTocSettingsRegex } from "./constants";
 import { HeadingLevel, LocalTocSettings, ValidatedInstaToc, ValidCacheType } from "./types";

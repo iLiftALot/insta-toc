@@ -48,6 +48,7 @@ export default class InstaTocPlugin extends Plugin {
 				const pathWithFileExtension: string = ctx.sourcePath; // Includes .md
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 				const file: TFile = this.app.vault.getAbstractFileByPath(pathWithFileExtension) as TFile;
+				if (!(file instanceof TFile)) return;
 				// TOC codeblock content
 				const lines: string[] = source
 					// Process only the ToC content without local settings
