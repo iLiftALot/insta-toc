@@ -28,9 +28,6 @@ export default class InstaTocPlugin extends Plugin {
 	private modifyEventRef: EventRef | undefined;
 	private debouncer: Debouncer<[fileCache: CachedMetadata], void>;
 
-	// Flags to maintain state with updates
-	public hasTocBlock = true;
-
 	public getDelay = () => this.settings.updateDelay;
 
 	constructor(app: App, manifest: PluginManifest) {
@@ -48,10 +45,6 @@ export default class InstaTocPlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(
 			"insta-toc",
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): Promise<void> => {
-				if (!this.hasTocBlock) {
-					this.hasTocBlock = true;
-				}
-
 				const pathWithFileExtension: string = ctx.sourcePath; // Includes .md
 				const filePath: string = pathWithFileExtension.substring(0, pathWithFileExtension.lastIndexOf("."));
 				const file: TFile = this.app.vault.getAbstractFileByPath(pathWithFileExtension) as TFile;
@@ -84,11 +77,6 @@ export default class InstaTocPlugin extends Plugin {
 				// Configure indentation once rendered
 				configureRenderedIndent(el, headingLevels, this.settings.indentSize);
 			}
-		);
-
-		this.registerEvent(
-			// Reset with new files to fix no detection on file open
-			this.app.workspace.on("file-open", () => this.hasTocBlock = true)
 		);
 
 		this.updateModifyEventListener();
