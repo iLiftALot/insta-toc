@@ -345,28 +345,18 @@ export class Validator {
 
     // Validates all conditions and asserts the type when true
     public isValid(): this is Validator & ValidatedInstaToc {
-        const hasInstaTocSectionResult: boolean = this.hasInstaTocSection();
-
-        // If file has no insta-toc section, skip processing
-        if (!hasInstaTocSectionResult) {
-            // Set the plugin.hasTocBlock variable, considering the
-            // code block processor in main.ts can't
-            this.plugin.hasTocBlock = false;
-
-            return false;
-        }
-
-        const headingsChanged: boolean = this.haveHeadingsChanged();
-
-        // If the headings have not changed, skip processing
-        if (!headingsChanged) return false;
-
-        // Process and store data for later use
+        if (!this.hasInstaTocSection()) return false;
+    
         this.setTocInsertPos();
+    
+        const headingsChanged = this.haveHeadingsChanged();
+        const localSettingsChanged = this.haveLocalSettingsChanged();
+    
+        if (!headingsChanged && !localSettingsChanged) return false;
+    
         this.configureLocalSettings();
         this.setFileHeadings();
-
-        // Lastly, ensure the cursor is not within the ToC
+    
         return !this.cursorInToc();
     }
 }
