@@ -106,49 +106,57 @@ export function testHandleLinks(fileName: string, content: string, indentation: 
     let [contentText, alias] = [content, content];
 
     // Process Obsidian wiki links with alias
-    contentText = contentText.replace(testWikiLinkWithAliasRegex, (match, refPath, refAlias) => {
-        // Text including [[wikilink|wikitext]] -> Text including wikilink wikitext
-        return `${refPath} ${refAlias}`;
-    });
-    alias = alias.replace(testWikiLinkWithAliasRegex, (match, refPath, refAlias) => {
-        // [[wikilink|wikitext]] -> wikitext
-        return refAlias;
-    });
+    contentText = contentText.replace(
+        testWikiLinkWithAliasRegex,
+        (_match: string, refPath: string | number, refAlias: string | number): string => {
+            // Text including [[wikilink|wikitext]] -> Text including wikilink wikitext
+            return `${refPath} ${refAlias}`;
+        },
+    );
+    alias = alias.replace(
+        testWikiLinkWithAliasRegex,
+        (_match: string, _refPath: string | number, refAlias: string | number): string => {
+            // [[wikilink|wikitext]] -> wikitext
+            return `${refAlias}`;
+        },
+    );
 
     // Process Obsidian wiki links without alias
-    contentText = contentText.replace(testWikiLinkNoAliasRegex, (match, refPath) => {
+    contentText = contentText.replace(testWikiLinkNoAliasRegex, (_match: string, refPath: string | number): string => {
         // Text including [[wikilink]] -> Text including wikilink
         // OR
         // Text including [[path/to/wikilink]] -> Text including wikilink
-        refPath = refPath.split('/').pop() ?? refPath;
-        return refPath;
+        return String(refPath).split("/").pop() ?? String(refPath);
     });
-    alias = alias.replace(testWikiLinkNoAliasRegex, (match, refPath) => {
+    alias = alias.replace(testWikiLinkNoAliasRegex, (_match: string, refPath: string | number): string => {
         // [[wikilink]] -> wikilink
         // OR
         // [[path/to/wikilink]] -> wikilink
-        refPath = refPath.split('/').pop() ?? refPath;
-        return refPath;
+        return String(refPath).split("/").pop() ?? String(refPath);
     });
 
     // Process markdown links
-    contentText = contentText.replace(testMarkdownLinkRegex, (match, refAlias) => {
+    contentText = contentText.replace(testMarkdownLinkRegex, (match: string, _refAlias: string | number): string => {
         // Text including [Link](https://www.link.com) -> Text including [Link](https://www.link.com)
         return match;
     });
-    alias = alias.replace(testMarkdownLinkRegex, (match, refAlias) => {
+    alias = alias.replace(testMarkdownLinkRegex, (_match: string, refAlias: string | number): string => {
         // [Link](https://www.link.com) -> Link
-        return refAlias;
+        return String(refAlias);
     });
 
-    // Final clean and format for tags and HTML
-    contentText = contentText.replace(testTagLinkRegex, (match, symbol, tag) => { // Remove any tags
-        // Text including #a-tag -> Text including a-tag
-        return tag;
-    });
+    // Clean up tags
+    contentText = contentText.replace(
+        testTagLinkRegex,
+        (_match: string, _symbol: string | number, tag: string | number): string => {
+            // Remove any tags
+            // Text including #a-tag -> Text including a-tag
+            return String(tag);
+        },
+    );
     alias = testCleanAlias(alias); // Process HTML and exluded characters
 
-    return `${' '.repeat((indentation < 0 ? 0 : indentation) * 4)}- [[${fileName}#${contentText}|${alias}]]`;
+    return `${" ".repeat((indentation < 0 ? 0 : indentation) * 4)}- [[${fileName}#${contentText}|${alias}]]`;
 }
 
 // Strip the alias of specified excluded characters and convert HTML to markdown
