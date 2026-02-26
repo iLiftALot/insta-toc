@@ -5,6 +5,6 @@
     "minAppVersion": "0.15.0",
     "description": "Simultaneously generate, update, and maintain a table of contents for your notes.",
     "author": "Nick C.",
-    "autherUrl": "https://github.com/iLiftALot/insta-toc",
+    "authorUrl": "https://github.com/iLiftALot/insta-toc",
     "isDesktopOnly": false
 }

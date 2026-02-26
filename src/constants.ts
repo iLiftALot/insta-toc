@@ -23,7 +23,8 @@ export const tagLinkRegex: RegExp = /(#)([/\-_\w][^\s]*)/g;
 export const omitHeadingRegex: RegExp = /<!--\s*omit\s*-->/;
 
 // Extracts TOC settings
-export const localTocSettingsRegex: RegExp = /-{3}\n([\s\S]*)\n-{3}/;
+export const localTocSettingsRegex: RegExp = /^---\n([\s\S]*?)\n---/m;
+// export const localTocSettingsRegex: RegExp = /-{3}\n([\s\S]*)\n-{3}/;
 
 
 export const BulletTypes = {
