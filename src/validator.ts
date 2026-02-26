@@ -15,6 +15,7 @@ import InstaTocPlugin from "./main";
 export class Validator {
     private plugin: InstaTocPlugin;
     private previousHeadings: HeadingCache[] = [];
+    private previousLocalSettingsRaw = "";
 
     public editor: Editor;
     public cursorPos: EditorPosition;
@@ -26,12 +27,7 @@ export class Validator {
     public metadata: CachedMetadata;
     public instaTocSection: SectionCache;
 
-    constructor(
-        plugin: InstaTocPlugin,
-        metadata: CachedMetadata,
-        editor: Editor,
-        cursorPos: EditorPosition
-    ) {
+    constructor(plugin: InstaTocPlugin, metadata: CachedMetadata, editor: Editor, cursorPos: EditorPosition) {
         this.plugin = plugin;
         this.metadata = metadata;
         this.editor = editor;
@@ -40,16 +36,22 @@ export class Validator {
     }
 
     // Method to update the validator properties while maintaining the previous state
-    public update(
-        plugin: InstaTocPlugin,
-        metadata: CachedMetadata,
-        editor: Editor,
-        cursorPos: EditorPosition
-    ): void {
+    public update(plugin: InstaTocPlugin, metadata: CachedMetadata, editor: Editor, cursorPos: EditorPosition): void {
         this.plugin = plugin;
         this.metadata = metadata;
         this.editor = editor;
         this.cursorPos = cursorPos;
+    }
+
+    private haveLocalSettingsChanged(): boolean {
+        const tocRange = this.editor.getRange(this.tocInsertPos.from, this.tocInsertPos.to);
+        const tocData = tocRange.match(localTocSettingsRegex);
+        const current = (tocData?.[1] ?? '').trim();
+    
+        if (current === this.previousLocalSettingsRaw) return false;
+    
+        this.previousLocalSettingsRaw = current;
+        return true;
     }
 
     // Method to compare current headings with previous headings
@@ -58,16 +60,15 @@ export class Validator {
         const noPrevHeadings: boolean = this.previousHeadings.length === 0;
         const diffHeadingsLength: boolean = currentHeadings.length !== this.previousHeadings.length;
 
-        const noHeadingsChange: boolean = noPrevHeadings || diffHeadingsLength
-            ? false
-            : currentHeadings.every(
-                (headingCache: HeadingCache, index: number) => {
-                    return (
-                        headingCache.heading === this.previousHeadings[index].heading &&
-                        headingCache.level === this.previousHeadings[index].level
-                    );
-                }
-            );
+        const noHeadingsChange: boolean =
+            noPrevHeadings || diffHeadingsLength
+                ? false
+                : currentHeadings.every((headingCache: HeadingCache, index: number) => {
+                      return (
+                          headingCache.heading === this.previousHeadings[index].heading &&
+                          headingCache.level === this.previousHeadings[index].level
+                      );
+                  });
 
         if (noHeadingsChange) return false;
 
@@ -79,26 +80,22 @@ export class Validator {
 
     // Type predicate to assert that metadata has headings and sections
     private hasHeadingsAndSections(): this is Validator & {
-        metadata: ValidCacheType
+        metadata: ValidCacheType;
     } {
-        return (
-            !!this.metadata &&
-            !!this.metadata.headings &&
-            !!this.metadata.sections
-        )
+        return !!this.metadata && !!this.metadata.headings && !!this.metadata.sections;
     }
 
     // Finds and stores the instaTocSection
     private hasInstaTocSection(): this is Validator & {
         metadata: ValidCacheType;
-        instaTocSection: SectionCache
+        instaTocSection: SectionCache;
     } {
         if (!this.hasHeadingsAndSections()) return false;
 
         const instaTocSection: SectionCache | undefined = this.metadata.sections.find(
             (section: SectionCache) =>
-                section.type === 'code' &&
-                this.editor.getLine(section.position.start.line) === `\`\`\`${instaTocCodeBlockId}`
+                section.type === "code" &&
+                this.editor.getLine(section.position.start.line) === `\`\`\`${instaTocCodeBlockId}`,
         );
 
         if (instaTocSection) {
@@ -120,20 +117,17 @@ export class Validator {
         const tocStartPos: EditorPosition = { line: startLine, ch: startCh };
         const tocEndPos: EditorPosition = { line: endLine, ch: endCh };
 
-        this.tocInsertPos = { from: tocStartPos, to: tocEndPos }
+        this.tocInsertPos = { from: tocStartPos, to: tocEndPos };
     }
 
     private configureLocalSettings(): void {
-        const tocRange = this.editor.getRange(
-            this.tocInsertPos.from,
-            this.tocInsertPos.to
-        );
+        const tocRange = this.editor.getRange(this.tocInsertPos.from, this.tocInsertPos.to);
         const tocData = tocRange.match(localTocSettingsRegex);
 
         if (!tocData) return;
 
         const [, settingString] = tocData;
-        
+
         this.validateLocalSettings(settingString);
     }
 
@@ -144,7 +138,7 @@ export class Validator {
             parsedYml = parseYaml(yml);
         } catch (err) {
             this.localTocSettings = this.updatedLocalSettings || this.localTocSettings;
-            const errMsg = 'Invalid YAML in insta-toc settings:\n' + err;
+            const errMsg = "Invalid YAML in insta-toc settings:\n" + err;
 
             console.error(errMsg);
             new Notice(errMsg);
@@ -157,43 +151,51 @@ export class Validator {
         // Validate and assign 'title'
         if (parsedYml.title !== undefined) {
             const title = parsedYml.title;
-            
-            if (typeof title !== 'object' || title === null) {
+
+            if (typeof title !== "object" || title === null) {
                 validationErrors.push("'title' must be an object.");
             } else {
                 const { name, level, center } = title;
-                
-                if (name !== undefined && typeof name !== 'string') {
-                    validationErrors.push("'title.name' must be a string indicating the title to be displayed on the ToC.");
+
+                if (name !== undefined && typeof name !== "string") {
+                    validationErrors.push(
+                        "'title.name' must be a string indicating the title to be displayed on the ToC.",
+                    );
                 }
 
                 if (level !== undefined && !isHeadingLevel(level)) {
-                    validationErrors.push("'title.level' must be an integer between 1 and 6 indicating the heading level of the ToC title.");
+                    validationErrors.push(
+                        "'title.level' must be an integer between 1 and 6 indicating the heading level of the ToC title.",
+                    );
                 }
 
-                if (center !== undefined && !(typeof center === 'boolean')) {
-                    validationErrors.push("'title.center' must be a boolean indicating whether the title position should be centered.");
+                if (center !== undefined && !(typeof center === "boolean")) {
+                    validationErrors.push(
+                        "'title.center' must be a boolean indicating whether the title position should be centered.",
+                    );
                 }
             }
         }
 
         // Validate and assign 'exclude'
         if (parsedYml.exclude !== undefined) {
-            if (typeof parsedYml.exclude !== 'string') {
-                validationErrors.push("'exclude' must be a string (\"...\") containing each character to exclude, or a regex pattern (/.../).");
+            if (typeof parsedYml.exclude !== "string") {
+                validationErrors.push(
+                    "'exclude' must be a string (\"...\") containing each character to exclude, or a regex pattern (/.../).",
+                );
             }
         }
 
         // Validate and assign 'style'
         if (parsedYml.style !== undefined) {
             const style = parsedYml.style;
-            
-            if (typeof style !== 'object' || style === null) {
+
+            if (typeof style !== "object" || style === null) {
                 validationErrors.push("'style' must be an object.");
             } else {
                 const { listType } = style;
-                
-                if (listType !== undefined && !['dash', 'number'].includes(listType)) {
+
+                if (listType !== undefined && !["dash", "number"].includes(listType)) {
                     validationErrors.push("'style.listType' must be 'dash' or 'number'.");
                 }
             }
@@ -202,11 +204,15 @@ export class Validator {
         // Validate and assign 'omit'
         if (parsedYml.omit !== undefined) {
             if (!Array.isArray(parsedYml.omit)) {
-                validationErrors.push("'omit' must be an array of strings indicating the text of each heading you'd like to omit.");
+                validationErrors.push(
+                    "'omit' must be an array of strings indicating the text of each heading you'd like to omit.",
+                );
             } else {
                 for (const item of parsedYml.omit) {
-                    if (typeof item !== 'string') {
-                        validationErrors.push("'omit' array must contain only strings indicating the text of headings you'd like to omit.");
+                    if (typeof item !== "string") {
+                        validationErrors.push(
+                            "'omit' array must contain only strings indicating the text of headings you'd like to omit.",
+                        );
                         break;
                     }
                 }
@@ -217,19 +223,23 @@ export class Validator {
         if (parsedYml.levels !== undefined) {
             const levels = parsedYml.levels;
 
-            if (typeof levels !== 'object' || levels === null) {
+            if (typeof levels !== "object" || levels === null) {
                 validationErrors.push("'levels' must be an object.");
             } else {
                 const { min, max } = levels;
-                
+
                 if (min !== undefined && !isHeadingLevel(min)) {
-                    validationErrors.push("'levels.min' must be an integer between 1 and 6 indicating the minimum heading level to include.");
+                    validationErrors.push(
+                        "'levels.min' must be an integer between 1 and 6 indicating the minimum heading level to include.",
+                    );
                 }
-                
+
                 if (max !== undefined && !isHeadingLevel(max)) {
-                    validationErrors.push("'levels.max' must be an integer between 1 and 6 indicating the maximum heading level to include.");
+                    validationErrors.push(
+                        "'levels.max' must be an integer between 1 and 6 indicating the maximum heading level to include.",
+                    );
                 }
-                
+
                 if (min !== undefined && max !== undefined && min > max) {
                     validationErrors.push("'levels.min' cannot be greater than 'levels.max'.");
                 }
@@ -237,8 +247,9 @@ export class Validator {
         }
 
         if (validationErrors.length > 0) {
-            const validationErrorMsg: string = 'Invalid properties in insta-toc settings:\n' + validationErrors.join('\n');
-            
+            const validationErrorMsg: string =
+                "Invalid properties in insta-toc settings:\n" + validationErrors.join("\n");
+
             console.error(validationErrorMsg);
             new Notice(validationErrorMsg);
 
@@ -246,17 +257,9 @@ export class Validator {
         } else {
             // All validations passed; merge
             if (!this.updatedLocalSettings) {
-                this.updatedLocalSettings = deepMerge<LocalTocSettings>(
-                    this.localTocSettings,
-                    parsedYml,
-                    true
-                );
+                this.updatedLocalSettings = deepMerge<LocalTocSettings>(this.localTocSettings, parsedYml, true);
             } else {
-                this.updatedLocalSettings = deepMerge<LocalTocSettings>(
-                    this.updatedLocalSettings,
-                    parsedYml,
-                    false
-                );
+                this.updatedLocalSettings = deepMerge<LocalTocSettings>(this.updatedLocalSettings, parsedYml, false);
             }
         }
 
@@ -264,8 +267,10 @@ export class Validator {
     }
 
     private cursorInToc(): boolean {
-        return this.cursorPos.line >= this.instaTocSection.position.start.line &&
-               this.cursorPos.line <= this.instaTocSection.position.end.line;
+        return (
+            this.cursorPos.line >= this.instaTocSection.position.start.line &&
+            this.cursorPos.line <= this.instaTocSection.position.end.line
+        );
     }
 
     private setFileHeadings(): void {
@@ -297,14 +302,11 @@ export class Validator {
                     const patterns: string[] = [];
 
                     // Process global excluded characters
-                    if (
-                        this.plugin.settings.excludedChars &&
-                        this.plugin.settings.excludedChars.length > 0
-                    ) {
+                    if (this.plugin.settings.excludedChars && this.plugin.settings.excludedChars.length > 0) {
                         // Escape and join global excluded characters
-                        const escapedGlobalChars = this.plugin.settings.excludedChars.map(
-                            char => escapeRegExp(char)
-                        ).join('');
+                        const escapedGlobalChars = this.plugin.settings.excludedChars
+                            .map((char) => escapeRegExp(char))
+                            .join("");
 
                         if (escapedGlobalChars.length > 0) {
                             patterns.push(`[${escapedGlobalChars}]`);
@@ -312,10 +314,7 @@ export class Validator {
                     }
 
                     // Process local 'exclude' setting
-                    if (
-                        this.localTocSettings.exclude &&
-                        this.localTocSettings.exclude.length > 0
-                    ) {
+                    if (this.localTocSettings.exclude && this.localTocSettings.exclude.length > 0) {
                         const excludeStr = this.localTocSettings.exclude;
 
                         if (isRegexPattern(excludeStr)) {
@@ -335,13 +334,12 @@ export class Validator {
 
                     // Build and apply the combined regex pattern
                     if (patterns.length > 0) {
-                        const combinedPattern = new RegExp(patterns.join('|'), 'g');
-                        modifiedHeading = modifiedHeading.replace(combinedPattern, '');
+                        const combinedPattern = new RegExp(patterns.join("|"), "g");
+                        modifiedHeading = modifiedHeading.replace(combinedPattern, "");
                     }
 
                     return { ...heading, heading: modifiedHeading };
-                }
-            );
+                });
         }
     }
 
@@ -359,7 +357,7 @@ export class Validator {
         }
 
         const headingsChanged: boolean = this.haveHeadingsChanged();
-        
+
         // If the headings have not changed, skip processing
         if (!headingsChanged) return false;
 
