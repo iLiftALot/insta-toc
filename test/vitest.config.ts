@@ -6,10 +6,10 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-        // testTransformMode: {
-        
-            web: ['\\.[jt]sx$'],
-        },
+        // transformMode: {
+        //     web: ['\\.[jt]sx$'],
+        // },
+        testNamePattern: '',
         coverage: {
             reporter: ['text', 'json', 'html']
         }
