@@ -80,10 +80,10 @@ export class Validator {
     }
 
     // Type predicate to assert that metadata has headings and sections
-    private hasHeadingsAndSections(): this is Validator & {
+    private hasSections(): this is Validator & {
         metadata: ValidCacheType;
     } {
-        return !!this.metadata && !!this.metadata.headings && !!this.metadata.sections;
+        return !!this.metadata && !!this.metadata.sections;
     }
 
     // Finds and stores the instaTocSection
@@ -91,7 +91,7 @@ export class Validator {
         metadata: ValidCacheType;
         instaTocSection: SectionCache;
     } {
-        if (!this.hasHeadingsAndSections()) return false;
+        if (!this.hasSections()) return false;
 
         const instaTocSection: SectionCache | undefined = this.metadata.sections.find(
             (section: SectionCache) =>
@@ -275,73 +275,74 @@ export class Validator {
     }
 
     private setFileHeadings(): void {
-        if (this.metadata.headings) {
-            // Store the file headings to reference in later code
-            this.fileHeadings = this.metadata.headings
-                .filter((heading: HeadingCache) => {
-                    const headingText: string = heading.heading.trim();
-                    const headingLevel = heading.level as HeadingLevel;
+        // if (this.metadata.headings) {
+        const heading = this.metadata?.headings
+        // Store the file headings to reference in later code
+        this.fileHeadings = this.metadata.headings
+            .filter((heading: HeadingCache) => {
+                const headingText: string = heading.heading.trim();
+                const headingLevel = heading.level as HeadingLevel;
 
-                    return (
-                        // Omit headings with "<!-- omit -->"
-                        !headingText.match(/<!--\s*omit\s*-->/) &&
-                        // Omit headings included within local "omit" setting
-                        !this.localTocSettings.omit.includes(headingText) &&
-                        // Omit headings with levels outside of the specified local min/max setting
-                        headingLevel >= this.localTocSettings.levels.min &&
-                        headingLevel <= this.localTocSettings.levels.max &&
-                        // Omit empty headings
-                        headingText.trim().length > 0 &&
-                        // Omit heading text specified in the global exclude setting
-                        !this.plugin.settings.excludedHeadingText.includes(headingText) &&
-                        // Omit heading levels specified in the global exclude setting
-                        !this.plugin.settings.excludedHeadingLevels.includes(headingLevel)
-                    );
-                })
-                .map((heading: HeadingCache) => {
-                    let modifiedHeading = heading.heading;
-                    const patterns: string[] = [];
+                return (
+                    // Omit headings with "<!-- omit -->"
+                    !headingText.match(/<!--\s*omit\s*-->/) &&
+                    // Omit headings included within local "omit" setting
+                    !this.localTocSettings.omit.includes(headingText) &&
+                    // Omit headings with levels outside of the specified local min/max setting
+                    headingLevel >= this.localTocSettings.levels.min &&
+                    headingLevel <= this.localTocSettings.levels.max &&
+                    // Omit empty headings
+                    headingText.trim().length > 0 &&
+                    // Omit heading text specified in the global exclude setting
+                    !this.plugin.settings.excludedHeadingText.includes(headingText) &&
+                    // Omit heading levels specified in the global exclude setting
+                    !this.plugin.settings.excludedHeadingLevels.includes(headingLevel)
+                );
+            })
+            .map((heading: HeadingCache) => {
+                let modifiedHeading = heading.heading;
+                const patterns: string[] = [];
 
-                    // Process global excluded characters
-                    if (this.plugin.settings.excludedChars && this.plugin.settings.excludedChars.length > 0) {
-                        // Escape and join global excluded characters
-                        const escapedGlobalChars = this.plugin.settings.excludedChars
-                            .map((char) => escapeRegExp(char))
-                            .join("");
+                // Process global excluded characters
+                if (this.plugin.settings.excludedChars && this.plugin.settings.excludedChars.length > 0) {
+                    // Escape and join global excluded characters
+                    const escapedGlobalChars = this.plugin.settings.excludedChars
+                        .map((char) => escapeRegExp(char))
+                        .join("");
 
-                        if (escapedGlobalChars.length > 0) {
-                            patterns.push(`[${escapedGlobalChars}]`);
+                    if (escapedGlobalChars.length > 0) {
+                        patterns.push(`[${escapedGlobalChars}]`);
+                    }
+                }
+
+                // Process local 'exclude' setting
+                if (this.localTocSettings.exclude && this.localTocSettings.exclude.length > 0) {
+                    const excludeStr = this.localTocSettings.exclude;
+
+                    if (isRegexPattern(excludeStr)) {
+                        // It's a regex pattern (e.g., '/\d+/'), remove the slashes
+                        const regexBody = excludeStr.slice(1, -1);
+
+                        patterns.push(`(${regexBody})`);
+                    } else {
+                        // It's a string of characters to exclude
+                        const escapedLocalChars = escapeRegExp(excludeStr);
+
+                        if (escapedLocalChars.length > 0) {
+                            patterns.push(`[${escapedLocalChars}]`);
                         }
                     }
+                }
 
-                    // Process local 'exclude' setting
-                    if (this.localTocSettings.exclude && this.localTocSettings.exclude.length > 0) {
-                        const excludeStr = this.localTocSettings.exclude;
+                // Build and apply the combined regex pattern
+                if (patterns.length > 0) {
+                    const combinedPattern = new RegExp(patterns.join("|"), "g");
+                    modifiedHeading = modifiedHeading.replace(combinedPattern, "");
+                }
 
-                        if (isRegexPattern(excludeStr)) {
-                            // It's a regex pattern (e.g., '/\d+/'), remove the slashes
-                            const regexBody = excludeStr.slice(1, -1);
-
-                            patterns.push(`(${regexBody})`);
-                        } else {
-                            // It's a string of characters to exclude
-                            const escapedLocalChars = escapeRegExp(excludeStr);
-
-                            if (escapedLocalChars.length > 0) {
-                                patterns.push(`[${escapedLocalChars}]`);
-                            }
-                        }
-                    }
-
-                    // Build and apply the combined regex pattern
-                    if (patterns.length > 0) {
-                        const combinedPattern = new RegExp(patterns.join("|"), "g");
-                        modifiedHeading = modifiedHeading.replace(combinedPattern, "");
-                    }
-
-                    return { ...heading, heading: modifiedHeading };
-                });
-        }
+                return { ...heading, heading: modifiedHeading };
+            });
+        // }
     }
 
     // Validates all conditions and asserts the type when true

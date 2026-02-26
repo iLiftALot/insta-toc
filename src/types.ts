@@ -10,7 +10,7 @@ import {
 // Interface asserts that HeadingCache[] and SectionCache[]
 // are not undefined within the CachedMetadata type
 export interface ValidCacheType extends CachedMetadata {
-    headings: HeadingCache[];
+    // headings: HeadingCache[];
     sections: SectionCache[];
 }
 
