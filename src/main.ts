@@ -127,7 +127,6 @@ export default class InstaTocPlugin extends Plugin {
 			"changed", // file cache (containing heading cache) has been updated
 			(file: TFile, data: string, cache: CachedMetadata) => {
 				if (!this.hasTocBlock) return;
-				cache.blocks()
 				this.debouncer(cache);
 			}
 		);
