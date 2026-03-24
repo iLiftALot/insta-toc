@@ -1,0 +1,13 @@
+{
+	"search.exclude": {
+		"help": true
+	},
+	"files.watcherExclude": {
+		"**/help/**": true
+	},
+	"files.exclude": {
+		"**/.git": false
+	},
+	"css.lint.emptyRules": "ignore",
+	"chat.useNestedAgentsMdFiles": true
+}
