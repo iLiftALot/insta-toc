@@ -27,23 +27,23 @@ export const omitHeadingRegex: RegExp = /<!--\s*omit\s*-->/;
 // Extracts TOC settings
 export const localTocSettingsRegex: RegExp = /-{3}\r?\n([\s\S]*?)\r?\n-{3}/;
 
-export enum BulletTypes {
-    armenian = "armenian",
-    circle = "circle",
-    decimal = "decimal",
-    "decimal-leading-zero" = "decimal-leading-zero",
-    disc = "disc",
-    georgian = "georgian",
-    "lower-alpha" = "lower-alpha",
-    "lower-greek" = "lower-greek",
-    "lower-latin" = "lower-latin",
-    "lower-roman" = "lower-roman",
-    square = "square",
-    "upper-alpha" = "upper-alpha",
-    "upper-latin" = "upper-latin",
-    "upper-roman" = "upper-roman",
-    none = "none"
-}
+export const BulletTypes = {
+    armenian: "armenian",
+    circle: "circle",
+    decimal: "decimal",
+    "decimal-leading-zero": "decimal-leading-zero",
+    disc: "disc",
+    georgian: "georgian",
+    "lower-alpha": "lower-alpha",
+    "lower-greek": "lower-greek",
+    "lower-latin": "lower-latin",
+    "lower-roman": "lower-roman",
+    square: "square",
+    "upper-alpha": "upper-alpha",
+    "upper-latin": "upper-latin",
+    "upper-roman": "upper-roman",
+    none: "none"
+} as const;
 export const bulletTypeOptions = new Map<BulletType, string>([
     ["none", "None"],
     ["armenian", "Armenian (Ա)"],

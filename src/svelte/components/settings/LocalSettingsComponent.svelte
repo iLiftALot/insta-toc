@@ -30,7 +30,7 @@
     import { SvelteSet } from "svelte/reactivity";
     import type { YamlSchemaNode } from "../../ComponentTypes";
     import type ModalBase from "../modal/ModalBase";
-
+    
     interface Props {
         initialYaml?: string;
         darkMode?: boolean;

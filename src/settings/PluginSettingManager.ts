@@ -1,5 +1,4 @@
-import { PluginSettingsManagerBase } from "obsidian-dev-utils/obsidian/Plugin/PluginSettingsManagerBase";
-
+import { PluginSettingsManagerBase } from "obsidian-dev-utils/obsidian/plugin/plugin-settings-manager-base";
 import type InstaTocPlugin from "../Plugin";
 import { isRecord, sortRecord } from "../Utils";
 import { bulletTypeOptions } from "../constants";

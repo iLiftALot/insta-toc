@@ -1,10 +1,10 @@
-<script lang="ts" generics="T">
+<script lang="ts">
     import { X } from "lucide-svelte";
     import InstaTocPlugin from "src/Plugin";
     import { getContext, tick } from "svelte";
     import type { ParseResult } from "../ComponentTypes";
 
-    interface ListInputComponentProps<T> {
+    interface ListInputComponentProps<T extends any = any> {
         placeholder?: string;
         addButtonText?: string;
         initialValues: T[];
@@ -24,12 +24,12 @@
         equals = (a, b) => String(a) === String(b),
         sort,
         onSave
-    }: ListInputComponentProps<T> = $props();
+    }: ListInputComponentProps = $props();
 
     const plugin = getContext<InstaTocPlugin>("plugin");
 
     // svelte-ignore state_referenced_locally
-    let items = $state<T[]>([...initialValues]);
+    let items = $state<(typeof initialValues[number])[]>([...initialValues]);
     let inputValue = $state<string>("");
     let busy = $state<boolean>(false);
     let errorMsg = $state<string>("");
@@ -43,7 +43,7 @@
         });
     }
 
-    async function persistAndRender(nextItems: T[]): Promise<void> {
+    async function persistAndRender<T>(nextItems: T[]): Promise<void> {
         const finalItems = sort ? [...nextItems].sort(sort) : [...nextItems];
 
         busy = true;
@@ -52,7 +52,9 @@
             items = finalItems;
         } catch (e) {
             console.error(e);
-            errorMsg = `Failed to save changes${": " + e?.message || "."}`;
+            errorMsg = `Failed to save changes${
+                ": " + (e as Error)?.message || "."
+            }`;
         } finally {
             busy = false;
         }

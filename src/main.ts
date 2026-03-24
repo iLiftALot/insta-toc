@@ -1,5 +1,5 @@
 /* dprint-ignore */
-import type {} from "obsidian-typings";
+import type { } from "obsidian-typings";
 
 import InstaTocPlugin from "./Plugin";
 import { injectGlobals } from "./globals/globalFuncs";

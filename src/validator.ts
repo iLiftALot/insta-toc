@@ -34,13 +34,13 @@ export class Validator {
 
     public editor: Editor;
     public cursorPos: EditorPosition;
-    public tocInsertPos: EditorRange;
+    public tocInsertPos!: EditorRange; // Assigned in this.isValid
 
     public fileHeadings: HeadingCache[];
     public localTocSettings: LocalTocSettings;
     public updatedLocalSettings: LocalTocSettings | undefined;
     public metadata: CachedMetadata;
-    public instaTocSection: SectionCache;
+    public instaTocSection!: SectionCache; // Assigned in this.isValid
 
     public hasLocalListTypeOverride = false;
 
@@ -331,7 +331,7 @@ export class Validator {
 
         try {
             const sanitizedYmlString = sanitizeYaml(yml);
-            parsedYml = parseYaml(sanitizedYmlString);
+            parsedYml = parseYaml(sanitizedYmlString) as Partial<LocalTocSettings>;
         } catch (err) {
             this.localTocSettings = this.updatedLocalSettings || this.localTocSettings;
             const errMsg = "Invalid YAML in insta-toc settings:\n" + err;

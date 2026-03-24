@@ -2,46 +2,43 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
+import svelteConfig from './svelte.config.js';
 
 const srcRootPath = fileURLToPath(new URL('./src', import.meta.url));
 
 export default defineConfig(({ mode }) => ({
-	plugins: [svelte({
-		compilerOptions: {
-			hmr: false
-		}
-	})],
-	resolve: {
-		conditions: mode === 'test' ? ['browser'] : [],
-		alias: {
-			src: srcRootPath
-		}
-	},
-	test: {
-		expect: { requireAssertions: true },
-		projects: [
-			{
-				extends: './vite.config.ts',
-				test: {
-					name: 'client',
-					browser: {
-						enabled: true,
-						provider: playwright(),
-						instances: [{ browser: 'chromium', headless: true }]
-					},
-					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: []
-				}
-			},
-			{
-				extends: './vite.config.ts',
-				test: {
-					name: 'server',
-					environment: 'node',
-					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
-				}
-			}
-		]
-	}
+    plugins: [svelte(svelteConfig)],
+    resolve: {
+        conditions: mode === 'test' ? ['browser'] : [],
+        alias: {
+            src: srcRootPath
+        }
+    },
+    test: {
+        expect: { requireAssertions: true },
+        projects: [
+            {
+                extends: './vite.config.ts',
+                test: {
+                    name: 'client',
+                    browser: {
+                        enabled: true,
+                        provider: playwright(),
+                        instances: [{ browser: 'chromium', headless: true }]
+                    },
+                    include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+                    exclude: []
+                }
+            },
+            {
+                extends: './vite.config.ts',
+                test: {
+                    name: 'server',
+                    environment: 'node',
+                    include: ['src/**/*.{test,spec}.{js,ts}'],
+                    exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+                }
+            }
+        ]
+    }
 }));

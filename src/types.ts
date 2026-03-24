@@ -8,7 +8,7 @@ import type {
     TFile
 } from "obsidian";
 
-import type { PluginTypesBase } from "obsidian-dev-utils/obsidian/Plugin/PluginTypesBase";
+import type { PluginTypesBase } from "obsidian-dev-utils/obsidian/plugin/plugin-types-base";
 import type { BulletTypes } from "./constants";
 
 import type InstaTocPlugin from "./Plugin";

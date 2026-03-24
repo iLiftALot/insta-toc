@@ -62,12 +62,12 @@ export const testHeadingsWithSpecialChars: HeadingCache[] = [
     }
 ];
 
-export enum TestNames {
-    "testStandardHeadings",
-    "testHeadingsWithoutFirstLevel",
-    "testHeadingsMixed",
-    "testHeadingsWithSpecialChars"
-}
+export const TestNames = {
+    testStandardHeadings: 0,
+    testHeadingsWithoutFirstLevel: 1,
+    testHeadingsMixed: 2,
+    testHeadingsWithSpecialChars: 3
+} as const;
 export type TestName = keyof typeof TestNames;
 export type ContextResult = {
     initialHeadings: string[];
@@ -107,7 +107,7 @@ export const testTagLinkRegex: RegExp = /(#)([/\-_\w][^\s]*)/g;
 // Omit Specific Headings
 export const testOmitHeadingRegex: RegExp = /<!--\s*omit\s*-->/;
 
-export function testHandleLinks(fileName: string, content: string, indentation: number) {
+export function testHandleLinks(fileName: string, content: string, indentation: number): string {
     let [contentText, alias] = [content, content];
 
     // Process Obsidian wiki links with alias
@@ -120,9 +120,9 @@ export function testHandleLinks(fileName: string, content: string, indentation: 
     );
     alias = alias.replace(
         testWikiLinkWithAliasRegex,
-        (_matchh: string, _refPath: string, refAlias: string) => {
+        (_matchh: string, _refPath: string | number, refAlias: string | number) => {
             // [[wikilink|wikitext]] -> wikitext
-            return refAlias;
+            return String(refAlias);
         }
     );
 
@@ -164,7 +164,7 @@ export function testHandleLinks(fileName: string, content: string, indentation: 
 }
 
 // Strip the alias of specified excluded characters and convert HTML to markdown
-export function testCleanAlias(aliasText: string) {
+export function testCleanAlias(aliasText: string): string {
     const turndownService = new TurndownService({
         emDelimiter: "_",
         strongDelimiter: "**"

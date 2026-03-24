@@ -2,12 +2,12 @@ import type { SliderComponent, TextComponent } from "obsidian";
 import { debounce } from "obsidian";
 import type {
     TypedDropdownComponent
-} from "obsidian-dev-utils/obsidian/Components/SettingComponents/TypedDropdownComponent";
+} from "obsidian-dev-utils/obsidian/Components/setting-components/typed-dropdown-component";
 import {
     PluginSettingsTabBase,
     SAVE_TO_FILE_CONTEXT
-} from "obsidian-dev-utils/obsidian/Plugin/PluginSettingsTabBase";
-import { SettingEx } from "obsidian-dev-utils/obsidian/SettingEx";
+} from "obsidian-dev-utils/obsidian/plugin/plugin-settings-tab-base";
+import { SettingEx } from "obsidian-dev-utils/obsidian/setting-ex";
 import type InstaTocPlugin from "../Plugin";
 import { bulletTypeOptions, headingLevelOptions } from "../constants";
 import { ComponentMounter, ListInputComponent } from "../svelte";

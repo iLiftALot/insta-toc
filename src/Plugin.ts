@@ -9,8 +9,8 @@ import type {
     PluginManifest
 } from "obsidian";
 import { Component, debounce, MarkdownRenderer, MarkdownView, TFile } from "obsidian";
-import { PluginBase } from "obsidian-dev-utils/obsidian/Plugin/PluginBase";
-import { initPluginContext } from "obsidian-dev-utils/obsidian/Plugin/PluginContext";
+import { PluginBase } from "obsidian-dev-utils/obsidian/Plugin/plugin-base";
+import { initPluginContext } from "obsidian-dev-utils/obsidian/Plugin/plugin-context";
 import { ManageToc } from "./ManageToc";
 import { deepMerge, handleCodeblockListItem } from "./Utils";
 import { listRegex, localTocSettingsRegex } from "./constants";

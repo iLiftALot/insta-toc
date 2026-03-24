@@ -41,12 +41,6 @@
     }
 </script>
 
-<!-- {@snippet isCollapsed ? ChevronRight : ChevronDown} -->
-<!-- <div>
-    <ChevronDown />
-    <ChevronRight />
-</div> -->
-
 <button
     type="button"
     class={{ "fold-toggle": true, "is-collapsed": isCollapsed }}
@@ -56,10 +50,6 @@
     onclick={toggleBtnClicked}
     {@attach attachIcon}>
 </button>
-
-<!--- // {@attach attachIcon} /> --->
-
-<!-- use:icon={!isCollapsed ? 'ChevronDown' : 'ChevronRight'}></button> -->
 
 <style lang="scss">
     :global(.insta-toc-rendered .insta-toc-fold-parent)::marker {

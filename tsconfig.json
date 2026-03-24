@@ -1,11 +1,16 @@
 {
+    "extends": [
+        "@tsconfig/next/tsconfig.json",
+        "@tsconfig/node-ts/tsconfig.json"
+    ],
     "compilerOptions": {
         "baseUrl": ".",
         "inlineSourceMap": true,
         "inlineSources": true,
-        "module": "es2022",
-        "target": "es2022",
+        "module": "esnext",
+        "target": "esnext",
         "allowJs": true,
+        "allowArbitraryExtensions": true,
         "checkJs": true,
         "noImplicitAny": true,
         "moduleResolution": "bundler",

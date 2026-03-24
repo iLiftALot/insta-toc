@@ -63,7 +63,7 @@ describe("Headings", () => {
     };
 
     beforeEach(() => {
-        testId = TestNames[iteration] as TestName;
+        testId = (Object.keys(TestNames) as TestName[])[iteration];
         console.log(
             `${"#".repeat(10)}\n${testId}\n${"#".repeat(10)}\n${contextObject[testId].initialHeadings.join("\n")}`
         );
