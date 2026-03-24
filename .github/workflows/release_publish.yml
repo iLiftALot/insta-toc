@@ -59,7 +59,7 @@ jobs:
         id: get_version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build Project
         run: npm run build
@@ -72,10 +72,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2.1.0
         with:
-          tag_name: "${{ env.VERSION }}"
-          name: "${{ env.VERSION }}"
+          tag_name: "${{ steps.get_version.outputs.version }}"
+          name: "${{ steps.get_version.outputs.version }}"
           body: |
-            Automated release of version ${{ env.VERSION }}.
+            Automated release of version ${{ steps.get_version.outputs.version }}.
           files: |
             manifest.json
             main.js
@@ -84,7 +84,7 @@ jobs:
       - name: Upload Plugin Files
         uses: actions/upload-artifact@v4.4.3
         with:
-          name: insta-toc-${{ env.VERSION }}
+          name: insta-toc-${{ steps.get_version.outputs.version }}
           path: |
             manifest.json
             main.js
