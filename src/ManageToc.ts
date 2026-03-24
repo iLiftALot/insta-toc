@@ -1,35 +1,31 @@
-import {
-    App,
-    EditorRange,
-    HeadingCache,
-    stringifyYaml
-} from 'obsidian';
-import InstaTocPlugin from './main';
-import { instaTocCodeBlockId } from './constants';
-import { Validator } from './validator';
+import type { EditorRange, HeadingCache, TFile } from "obsidian";
+import { MarkdownView, stringifyYaml } from "obsidian";
+import type InstaTocPlugin from "./Plugin";
+import { instaTocCodeBlockId } from "./constants";
+import type { Validator } from "./validator";
 
 export class ManageToc {
     private plugin: InstaTocPlugin;
     private validator: Validator;
     private headingLevelStack: number[];
 
-    constructor(
-        plugin: InstaTocPlugin,
-        validator: Validator
-    ) {
+    private constructor(plugin: InstaTocPlugin, validator: Validator) {
         this.plugin = plugin;
         this.validator = validator;
         this.headingLevelStack = [];
-        
-        this.updateAutoToc();
+    }
+
+    public static async run(plugin: InstaTocPlugin, validator: Validator): Promise<void> {
+        const instance = new ManageToc(plugin, validator);
+        await instance.updateAutoToc();
     }
 
     // Determine the correct indentation level
     private getIndentationLevel(headingLevel: number): number {
         // Pop from the stack until we find a heading level less than the current
         while (
-            this.headingLevelStack.length > 0 && // Avoid indentation for the first heading
-            headingLevel <= this.headingLevelStack[this.headingLevelStack.length - 1]
+            this.headingLevelStack.length > 0 // Avoid indentation for the first heading
+            && headingLevel <= this.headingLevelStack[this.headingLevelStack.length - 1]
         ) {
             this.headingLevelStack.pop();
         }
@@ -40,59 +36,49 @@ export class ManageToc {
         return currentIndentLevel;
     }
 
-    // Generates a new insta-toc codeblock with number-type bullets
-    private generateNumberedToc(): string {
-        const tocHeadingRefs: string[] = [];
-        const levelNumbers: { [level: number]: number } = {};
-        const fileHeadings: HeadingCache[] = this.validator.fileHeadings;
+    private createTocContent(tocHeadingRefs: string[]): string {
+        const titleName = this.validator.insureLocalTocSetting(
+            "title",
+            "name",
+            (name) => name,
+            this.plugin.settings.tocTitle
+        );
+        const titleLevelPrefix = this.validator.insureLocalTocSetting(
+            "title",
+            "level",
+            (level) => "#".repeat(level),
+            "#".repeat(this.plugin.settings.tocTitleLevel)
+        );
+        const shouldCenterTitle = this.validator.insureLocalTocSetting(
+            "title",
+            "center",
+            (center) => center,
+            false
+        );
 
-        for (const headingCache of fileHeadings) {
-            const headingLevel = headingCache.level;
-            const headingText = headingCache.heading;
+        const normalizedTitleName = titleName.trim();
+        const centeredTitleName = shouldCenterTitle && normalizedTitleName.length > 0
+            ? `<center>${normalizedTitleName}</center>`
+            : normalizedTitleName;
 
-            if (headingText.length === 0) continue;
+        const localSettingsYaml = stringifyYaml(
+            this.validator.localTocSettings
+        ).trimEnd();
+        const localSettingsContent = `---\n${localSettingsYaml}\n---`;
+        const titleContent = centeredTitleName.length > 0
+            ? [titleLevelPrefix, centeredTitleName]
+                .filter((section) => section.length > 0)
+                .join(" ")
+            : "";
+        const tocList = tocHeadingRefs.join("\n");
 
-            const currentIndentLevel = this.getIndentationLevel(headingLevel);
-
-            // Initialize numbering for this level if not already
-            if (!levelNumbers[currentIndentLevel]) {
-                levelNumbers[currentIndentLevel] = 0;
-            }
-
-            // Reset numbering for deeper levels
-            for (let i = currentIndentLevel + 1; i <= 6; i++) {
-                levelNumbers[i] = 0;
-            }
-
-            // Increment the numbering at the current level
-            levelNumbers[currentIndentLevel]++;
-
-            const indent = ' '.repeat(currentIndentLevel * 4);
-            const bullet = levelNumbers[currentIndentLevel].toString();
-            const tocHeadingRef = `${indent}${bullet}. ${headingText}`;
-
-            tocHeadingRefs.push(tocHeadingRef);
-        }
-
-        const tocContent: string = `${
-            instaTocCodeBlockId
-        }\n---\n${
-            stringifyYaml(this.validator.localTocSettings)
-        }---\n\n${
-            '#'.repeat(this.validator.localTocSettings.title.level)
-        } ${
-            this.validator.localTocSettings.title.center
-                ? '<center>' + this.validator.localTocSettings.title.name + '</center>'
-                : this.validator.localTocSettings.title.name
-        }\n\n${
-            tocHeadingRefs.join('\n')
-        }`;
-        
-        return `\`\`\`${tocContent}\n\`\`\``;
+        return [localSettingsContent, titleContent, tocList]
+            .filter((section) => section.length > 0)
+            .join("\n\n");
     }
 
     // Generates a new insta-toc codeblock with normal dash-type bullets
-    private generateNormalToc(): string {
+    private generateToc(): string {
         const tocHeadingRefs: string[] = [];
         const fileHeadings: HeadingCache[] = this.validator.fileHeadings;
 
@@ -105,62 +91,75 @@ export class ManageToc {
             const currentIndentLevel = this.getIndentationLevel(headingLevel);
 
             // Calculate the indentation based on the current indentation level
-            const indent: string = ' '.repeat(currentIndentLevel * 4);
+            const indent: string = " ".repeat(currentIndentLevel * 4);
+            // const indent: string = " ".repeat(currentIndentLevel * this.plugin.settings.indentSize);
             const tocHeadingRef = `${indent}- ${headingText}`;
 
             tocHeadingRefs.push(tocHeadingRef);
         }
 
-        const tocContent: string = `${
-            instaTocCodeBlockId
-        }\n---\n${
-            stringifyYaml(this.validator.localTocSettings)
-        }---\n\n${
-            '#'.repeat(this.validator.localTocSettings.title.level)
-        } ${
-            this.validator.localTocSettings.title.center
-                ? '<center>' + this.validator.localTocSettings.title.name + '</center>'
-                : this.validator.localTocSettings.title.name
-        }\n\n${
-            tocHeadingRefs.join('\n')
-        }`;
-        
-        return `\`\`\`${tocContent}\n\`\`\``;
+        const tocContent: string = this.createTocContent(tocHeadingRefs);
+        return `\`\`\`${instaTocCodeBlockId}\n${tocContent}\n\`\`\``;
     }
 
-    // Workaround for the smart list number order bug
-    private insertTocBlock(
+    private async insertTocBlock(
         newTocBlock: string,
         tocInsertRange: EditorRange
-    ): void {
-        // Replace the old TOC with the updated TOC
-        this.validator.editor.replaceRange(
-            newTocBlock, tocInsertRange.from, tocInsertRange.to
-        );
+    ): Promise<void> {
+        const activeFile: TFile | null = this.plugin.app.workspace.getActiveFile();
+        if (!activeFile) return;
+
+        // Sync the active MarkdownView so the editor and reading view stay consistent
+        const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!view) return;
+
+        // If an editor is live (editing/source/live-preview)
+        if (this.plugin.getViewState() !== "preview") {
+            // const cmContent = view.editor.getValue();
+            // if (cmContent !== updatedContent) {
+            //     view.editor.setValue(updatedContent);
+            // }
+            // Replace the old TOC with the updated TOC
+            view.editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
+        } else {
+            const fromLine = tocInsertRange.from.line;
+            const fromCh = tocInsertRange.from.ch;
+            const toLine = tocInsertRange.to.line;
+            const toCh = tocInsertRange.to.ch;
+
+            // vault.process() atomically reads the file, applies the transform, and writes it back.
+            // This ensures the on-disk content stays in sync regardless of editor mode.
+            await this.plugin.app.vault.process(activeFile, (content) => {
+                const lines = content.split("\n");
+
+                let fromPos = 0;
+                for (let i = 0; i < fromLine && i < lines.length; i++) {
+                    fromPos += lines[i].length + 1;
+                }
+                fromPos += fromCh;
+
+                let toPos = 0;
+                for (let i = 0; i < toLine && i < lines.length; i++) {
+                    toPos += lines[i].length + 1;
+                }
+                toPos += toCh;
+
+                return content.slice(0, fromPos) + newTocBlock + content.slice(toPos);
+            });
+
+            // Re-read the updated file content so both editor and preview have it
+            const updatedContent = await this.plugin.app.vault.read(activeFile);
+            view.data = updatedContent;
+
+            // Force the reading-mode preview to re-render with the new content
+            view.previewMode.rerender(false);
+        }
     }
 
     // Dynamically update the TOC
-    private updateAutoToc(): void {
+    private async updateAutoToc(): Promise<void> {
         const tocInsertRange: EditorRange = this.validator.tocInsertPos;
-        // Determine if local settings override global
-        const decisionMaker: string = this.plugin.settings.bulletType !== this.validator.localTocSettings.style.listType
-            ? this.validator.localTocSettings.style.listType
-            : this.plugin.settings.bulletType;
-        
-        let newTocBlock: string;
-        switch(decisionMaker) {
-            case "dash":
-                newTocBlock = this.generateNormalToc();
-                break;
-            case "number":
-                newTocBlock = this.generateNumberedToc();
-                break;
-            default:
-                newTocBlock = this.generateNormalToc();
-                break;
-        }
-
-        // Workaround for the smart list number order bug
-        this.insertTocBlock(newTocBlock, tocInsertRange);
+        const newTocBlock: string = this.generateToc();
+        await this.insertTocBlock(newTocBlock, tocInsertRange);
     }
 }

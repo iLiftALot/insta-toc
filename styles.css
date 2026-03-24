@@ -1,34 +1,118 @@
-.fold-toggle {
-    margin-right: 5px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-    padding: 0;
-    width: 16px;
-    height: 20px;
+.insta-toc-rendered {
+  --insta-toc-toggle-slot: 20px;
+  /* aligns with fold button space */
+  --insta-toc-nonfold-extra-indent: 0px;
+  --insta-toc-indent-size: 12px;
+  position: relative;
 }
 
-.fold-toggle:focus {
-    outline: none;
+.insta-toc-rendered ul,
+.insta-toc-rendered ol {
+  margin-block: 0.15em;
+  padding-inline-start: 5px;
+}
+
+.insta-toc-rendered ul ul,
+.insta-toc-rendered ol ol,
+.insta-toc-rendered ul ol,
+.insta-toc-rendered ol ul {
+  padding-inline-start: var(--insta-toc-indent-size);
+  border-inline-start: 1px solid var(--background-modifier-border);
+}
+
+.insta-toc-rendered li {
+  list-style-type: var(--insta-toc-list-style, circle) !important;
+}
+
+.insta-toc-rendered .insta-toc-item {
+  position: inherit !important;
+}
+
+/**
+  * Prevents the additional built-in indentation
+  * guide from showing while in preview (reading)
+  * mode.
+  */
+.insta-toc-rendered li>ul,
+.insta-toc-rendered li>ol {
+  &::before {
+    content: '' !important;
+    display: none !important;
+  }
+}
+
+/* Top-level items without a fold toggle still need a subtle text inset */
+.insta-toc-rendered>ul>.insta-toc-item:not(.insta-toc-fold-parent) {
+  margin-inline-start: var(--insta-toc-toggle-slot) !important;
+
+  &.is-mobile {
+    margin-inline-start: calc(2.2 * var(--insta-toc-toggle-slot)) !important;
+  }
+}
+
+/*
+ * Nested children that are not fold-parents need a bit more inset than sibling
+ * fold-parents (which reserve inline space for the toggle button).
+ */
+.insta-toc-rendered .insta-toc-item>ul>.insta-toc-item:not(.insta-toc-fold-parent) {
+  /* margin-inline-start: calc(var(--insta-toc-indent-size) - var(--insta-toc-nonfold-extra-indent)) !important; */
+  margin-inline-start: calc(var(--insta-toc-toggle-slot) + var(--insta-toc-nonfold-extra-indent)) !important;
+
+  &.is-mobile {
+    margin-inline-start: calc(2.2 * (var(--insta-toc-toggle-slot) + var(--insta-toc-nonfold-extra-indent))) !important;
+  }
+}
+
+.insta-toc-rendered .insta-toc-fold-parent {
+  position: relative !important;
+  margin-inline-start: 0px !important;
+}
+
+.insta-toc-action-button>svg {
+  width: 16px;
+  height: 16px;
+}
+
+.markdown-reading-view .insta-toc-rendered {
+  .insta-toc-toolbar {
+    display: none !important;
+
+    .insta-toc-action-button {
+      color: var(--text-faint);
+      background-color: var(--background-primary);
+      right: 6px;
+      padding: var(--size-2-1) var(--size-4-2) !important;
+      border-radius: var(--code-radius);
+      font-family: unset;
+      font-size: unset;
+      position: relative !important;
+      cursor: pointer !important;
+      place-items: center;
+
+      &:hover {
+        background-color: var(--background-modifier-hover);
+      }
+    }
+  }
+
+  &:hover {
+    .insta-toc-toolbar {
+      display: flex !important;
+    }
+  }
 }
 
 .exclude-chars {
-    font-size: larger;
-    font-weight: bolder;
-    width: 100%;
+  font-size: larger;
+  font-weight: bolder;
+  width: 100%;
 }
 
 .setting-title {
-    display: flex;
-    justify-content: center;
-    font-size: xx-large;
+  display: flex;
+  font-size: x-large !important;
 }
 
 .insta-toc-text-info {
-    width: 33%;
-}
-
-.insta-toc-text-area {
-    width: 100%;
+  width: 33%;
 }

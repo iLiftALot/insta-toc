@@ -1,20 +1,36 @@
-import {
-    HeadingCache,
+import type {
     CachedMetadata,
-    SectionCache,
     Editor,
     EditorPosition,
-    parseYaml,
-    EditorRange
+    EditorRange,
+    HeadingCache,
+    SectionCache
 } from "obsidian";
-import { getDefaultLocalSettings, instaTocCodeBlockId, localTocSettingsRegex } from "./constants";
-import { HeadingLevel, LocalTocSettings, ValidatedInstaToc, ValidCacheType } from "./types";
-import { deepMerge, escapeRegExp, isHeadingLevel, isRegexPattern } from "./Utils";
-import InstaTocPlugin from "./main";
+import { Notice, parseYaml } from "obsidian";
+import type InstaTocPlugin from "./Plugin";
+import {
+    deepMerge,
+    escapeRegExp,
+    isHeadingLevel,
+    isNothing,
+    isRegexPattern,
+    sanitizeYaml
+} from "./Utils";
+import { BulletTypes, instaTocCodeBlockId, localTocSettingsRegex } from "./constants";
+import { getDefaultLocalSettings } from "./settings/Settings";
+import type {
+    BulletType,
+    HeadingLevel,
+    LocalTocSettings,
+    ValidatedInstaToc,
+    ValidCacheType
+} from "./types";
 
 export class Validator {
     private plugin: InstaTocPlugin;
+    private activeFilePath: string;
     private previousHeadings: HeadingCache[] = [];
+    private previousLocalSettingsRaw = "";
 
     public editor: Editor;
     public cursorPos: EditorPosition;
@@ -26,16 +42,21 @@ export class Validator {
     public metadata: CachedMetadata;
     public instaTocSection: SectionCache;
 
+    public hasLocalListTypeOverride = false;
+
     constructor(
         plugin: InstaTocPlugin,
         metadata: CachedMetadata,
         editor: Editor,
-        cursorPos: EditorPosition
+        cursorPos: EditorPosition,
+        activeFilePath: string
     ) {
         this.plugin = plugin;
         this.metadata = metadata;
         this.editor = editor;
         this.cursorPos = cursorPos;
+        this.activeFilePath = activeFilePath;
+        this.fileHeadings = [];
         this.localTocSettings = getDefaultLocalSettings();
     }
 
@@ -44,30 +65,171 @@ export class Validator {
         plugin: InstaTocPlugin,
         metadata: CachedMetadata,
         editor: Editor,
-        cursorPos: EditorPosition
+        cursorPos: EditorPosition,
+        activeFilePath: string,
+        localTocSettings?: LocalTocSettings
     ): void {
         this.plugin = plugin;
         this.metadata = metadata;
         this.editor = editor;
         this.cursorPos = cursorPos;
+
+        this.resetStateForFileSwitch(activeFilePath, localTocSettings);
+    }
+
+    private resetStateForFileSwitch(
+        activeFilePath: string,
+        localTocSettings?: LocalTocSettings
+    ): void {
+        if (this.activeFilePath === activeFilePath) return;
+
+        this.activeFilePath = activeFilePath;
+        this.previousHeadings = [];
+        this.previousLocalSettingsRaw = "";
+        this.localTocSettings = localTocSettings ?? getDefaultLocalSettings();
+        this.updatedLocalSettings = undefined;
+        this.fileHeadings = [];
+        this.hasLocalListTypeOverride = false;
+    }
+
+    // Overload 1: top-level key, no callback
+    public insureLocalTocSetting<K extends keyof LocalTocSettings>(
+        settingKey: K
+    ): NonNullable<LocalTocSettings[K]> | null;
+
+    // Overload 2: sub-key, no callback
+    public insureLocalTocSetting<
+        K extends keyof LocalTocSettings,
+        SK extends keyof NonNullable<LocalTocSettings[K]>
+    >(
+        settingKey: K,
+        subKey: SK
+    ): NonNullable<NonNullable<LocalTocSettings[K]>[SK]> | null;
+
+    // Overload 3: top-level key + callback
+    public insureLocalTocSetting<K extends keyof LocalTocSettings, R>(
+        settingKey: K,
+        cb: (value: NonNullable<LocalTocSettings[K]>) => R
+    ): R | null;
+
+    // Overload 4: top-level key + callback + default
+    public insureLocalTocSetting<K extends keyof LocalTocSettings, R, D>(
+        settingKey: K,
+        cb: (value: NonNullable<LocalTocSettings[K]>) => R,
+        defaultVal: D
+    ): R | D;
+
+    // Overload 5: sub-key + callback
+    public insureLocalTocSetting<
+        K extends keyof LocalTocSettings,
+        SK extends keyof NonNullable<LocalTocSettings[K]>,
+        R
+    >(
+        settingKey: K,
+        subKey: SK,
+        cb: (value: NonNullable<NonNullable<LocalTocSettings[K]>[SK]>) => R
+    ): R | null;
+
+    // Overload 6: sub-key + callback + default
+    public insureLocalTocSetting<
+        K extends keyof LocalTocSettings,
+        SK extends keyof NonNullable<LocalTocSettings[K]>,
+        R,
+        D
+    >(
+        settingKey: K,
+        subKey: SK,
+        cb: (value: NonNullable<NonNullable<LocalTocSettings[K]>[SK]>) => R,
+        defaultVal: D
+    ): R | D;
+
+    // Implementation
+    public insureLocalTocSetting<
+        K extends keyof LocalTocSettings,
+        SK extends keyof NonNullable<LocalTocSettings[K]>,
+        R,
+        D
+    >(
+        settingKey: K,
+        subKeyOrCb?: SK | ((value: NonNullable<LocalTocSettings[K]>) => R),
+        cbOrDefault?:
+            | ((value: NonNullable<NonNullable<LocalTocSettings[K]>[SK]>) => R)
+            | D,
+        defaultVal?: D
+    ):
+        | NonNullable<LocalTocSettings[K]>
+        | NonNullable<NonNullable<LocalTocSettings[K]>[SK]>
+        | R
+        | D
+        | null {
+        const val = this.localTocSettings[settingKey];
+
+        // subKeyOrCb is a callback → overload 2 or 3
+        if (typeof subKeyOrCb === "function") {
+            if (isNothing(val)) {
+                // cbOrDefault is the defaultVal for overload 3
+                return cbOrDefault !== undefined ? (cbOrDefault as D) : null;
+            }
+            return subKeyOrCb(val as NonNullable<LocalTocSettings[K]>);
+        }
+
+        // No sub-key → overload 1
+        if (isNothing(subKeyOrCb)) {
+            return isNothing(val) ? null : (val as NonNullable<LocalTocSettings[K]>);
+        }
+
+        // Has sub-key
+        if (isNothing(val)) {
+            return defaultVal !== undefined ? defaultVal : null;
+        }
+
+        const subVal = (val as NonNullable<typeof val>)[subKeyOrCb];
+        if (isNothing(subVal)) {
+            return defaultVal !== undefined ? defaultVal : null;
+        }
+
+        // Sub-key + callback → overload 5 or 6
+        if (typeof cbOrDefault === "function") {
+            return (
+                cbOrDefault as (
+                    value: NonNullable<NonNullable<LocalTocSettings[K]>[SK]>
+                ) => R
+            )(subVal as NonNullable<NonNullable<LocalTocSettings[K]>[SK]>);
+        }
+
+        // Sub-key, no callback → overload 4
+        return subVal as NonNullable<NonNullable<LocalTocSettings[K]>[SK]>;
+    }
+
+    private haveLocalSettingsChanged(): boolean {
+        const tocRange = this.editor.getRange(
+            this.tocInsertPos.from,
+            this.tocInsertPos.to
+        );
+        const tocData = tocRange.match(localTocSettingsRegex);
+        const current = (tocData?.[1] ?? "").trim();
+
+        if (current === this.previousLocalSettingsRaw) return false;
+
+        this.previousLocalSettingsRaw = current;
+        return true;
     }
 
     // Method to compare current headings with previous headings
     private haveHeadingsChanged(): boolean {
         const currentHeadings: HeadingCache[] = this.metadata.headings || [];
         const noPrevHeadings: boolean = this.previousHeadings.length === 0;
-        const diffHeadingsLength: boolean = currentHeadings.length !== this.previousHeadings.length;
+        const diffHeadingsLength: boolean =
+            currentHeadings.length !== this.previousHeadings.length;
 
         const noHeadingsChange: boolean = noPrevHeadings || diffHeadingsLength
             ? false
-            : currentHeadings.every(
-                (headingCache: HeadingCache, index: number) => {
-                    return (
-                        headingCache.heading === this.previousHeadings[index].heading &&
-                        headingCache.level === this.previousHeadings[index].level
-                    );
-                }
-            );
+            : currentHeadings.every((headingCache: HeadingCache, index: number) => {
+                return (
+                    headingCache.heading === this.previousHeadings[index].heading
+                    && headingCache.level === this.previousHeadings[index].level
+                );
+            });
 
         if (noHeadingsChange) return false;
 
@@ -78,27 +240,24 @@ export class Validator {
     }
 
     // Type predicate to assert that metadata has headings and sections
-    private hasHeadingsAndSections(): this is Validator & {
-        metadata: ValidCacheType
+    private hasSections(): this is Validator & {
+        metadata: ValidCacheType;
     } {
-        return (
-            !!this.metadata &&
-            !!this.metadata.headings &&
-            !!this.metadata.sections
-        )
+        return !!this.metadata && !!this.metadata.sections;
     }
 
     // Finds and stores the instaTocSection
     private hasInstaTocSection(): this is Validator & {
         metadata: ValidCacheType;
-        instaTocSection: SectionCache
+        instaTocSection: SectionCache;
     } {
-        if (!this.hasHeadingsAndSections()) return false;
+        if (!this.hasSections()) return false;
 
         const instaTocSection: SectionCache | undefined = this.metadata.sections.find(
             (section: SectionCache) =>
-                section.type === 'code' &&
-                this.editor.getLine(section.position.start.line) === `\`\`\`${instaTocCodeBlockId}`
+                section.type === "code"
+                && this.editor.getLine(section.position.start.line)
+                    === `\`\`\`${instaTocCodeBlockId}`
         );
 
         if (instaTocSection) {
@@ -111,7 +270,7 @@ export class Validator {
 
     // Provides the insert location range for the new insta-toc codeblock
     private setTocInsertPos(): void {
-        // Extract the star/end line/character index
+        // Extract the start/end line/character index
         const startLine: number = this.instaTocSection.position.start.line;
         const startCh = 0;
         const endLine: number = this.instaTocSection.position.end.line;
@@ -120,7 +279,7 @@ export class Validator {
         const tocStartPos: EditorPosition = { line: startLine, ch: startCh };
         const tocEndPos: EditorPosition = { line: endLine, ch: endCh };
 
-        this.tocInsertPos = { from: tocStartPos, to: tocEndPos }
+        this.tocInsertPos = { from: tocStartPos, to: tocEndPos };
     }
 
     private configureLocalSettings(): void {
@@ -133,112 +292,188 @@ export class Validator {
         if (!tocData) return;
 
         const [, settingString] = tocData;
-        
+
         this.validateLocalSettings(settingString);
     }
 
-    private validateLocalSettings(yml: string): void {
+    public applyLocalSettingsYaml(yml: string): boolean {
+        const previousLocalSettings = deepMerge<LocalTocSettings>(
+            getDefaultLocalSettings(),
+            this.localTocSettings,
+            false
+        );
+        const previousUpdatedSettings = this.updatedLocalSettings
+            ? deepMerge<LocalTocSettings>(
+                getDefaultLocalSettings(),
+                this.updatedLocalSettings,
+                false
+            )
+            : undefined;
+        const previousHasLocalListTypeOverride = this.hasLocalListTypeOverride;
+
+        this.localTocSettings = getDefaultLocalSettings();
+        this.updatedLocalSettings = undefined;
+        this.hasLocalListTypeOverride = false;
+
+        const didApply = this.validateLocalSettings(yml);
+
+        if (!didApply) {
+            this.localTocSettings = previousLocalSettings;
+            this.updatedLocalSettings = previousUpdatedSettings ?? previousLocalSettings;
+            this.hasLocalListTypeOverride = previousHasLocalListTypeOverride;
+            return false;
+        }
+
+        return true;
+    }
+
+    private validateLocalSettings(yml: string): boolean {
         let parsedYml: Partial<LocalTocSettings>;
 
         try {
-            parsedYml = parseYaml(yml);
+            const sanitizedYmlString = sanitizeYaml(yml);
+            parsedYml = parseYaml(sanitizedYmlString);
         } catch (err) {
             this.localTocSettings = this.updatedLocalSettings || this.localTocSettings;
-            const errMsg = 'Invalid YAML in insta-toc settings:\n' + err;
+            const errMsg = "Invalid YAML in insta-toc settings:\n" + err;
 
             console.error(errMsg);
+            this.plugin.consoleDebug(
+                "Failed to parse local settings YAML string:\n",
+                yml,
+                "\nError:\n",
+                err
+            );
             new Notice(errMsg);
 
-            return;
+            return false;
         }
 
         const validationErrors: string[] = [];
 
         // Validate and assign 'title'
-        if (parsedYml.title !== undefined) {
+        if (!!parsedYml.title) {
             const title = parsedYml.title;
-            
-            if (typeof title !== 'object' || title === null) {
+
+            if (typeof title !== "object") {
                 validationErrors.push("'title' must be an object.");
             } else {
                 const { name, level, center } = title;
-                
-                if (name !== undefined && typeof name !== 'string') {
-                    validationErrors.push("'title.name' must be a string indicating the title to be displayed on the ToC.");
+
+                if (!!name && typeof name !== "string") {
+                    parsedYml.title.name = String(name);
                 }
 
-                if (level !== undefined && !isHeadingLevel(level)) {
-                    validationErrors.push("'title.level' must be an integer between 1 and 6 indicating the heading level of the ToC title.");
+                if (!!level && !isHeadingLevel(level)) {
+                    validationErrors.push(
+                        "'title.level' must be an integer between 1 and 6 indicating the heading level of the ToC title."
+                    );
                 }
 
-                if (center !== undefined && !(typeof center === 'boolean')) {
-                    validationErrors.push("'title.center' must be a boolean indicating whether the title position should be centered.");
+                if (!!center && !(typeof center === "boolean")) {
+                    validationErrors.push(
+                        "'title.center' must be a boolean indicating whether the title position should be centered."
+                    );
                 }
             }
         }
 
         // Validate and assign 'exclude'
-        if (parsedYml.exclude !== undefined) {
-            if (typeof parsedYml.exclude !== 'string') {
-                validationErrors.push("'exclude' must be a string (\"...\") containing each character to exclude, or a regex pattern (/.../).");
+        if (!!parsedYml.exclude) {
+            if (typeof parsedYml.exclude !== "string") {
+                parsedYml.exclude = parsedYml.exclude === null
+                    ? parsedYml.exclude
+                    : String(parsedYml.exclude);
             }
         }
 
         // Validate and assign 'style'
-        if (parsedYml.style !== undefined) {
+        let parsedListTypeOverride: BulletType | null | undefined = undefined;
+        if (!!parsedYml.style) {
             const style = parsedYml.style;
-            
-            if (typeof style !== 'object' || style === null) {
+
+            if (typeof style !== "object") {
+                parsedYml.style = { listType: null };
                 validationErrors.push("'style' must be an object.");
             } else {
                 const { listType } = style;
-                
-                if (listType !== undefined && !['dash', 'number'].includes(listType)) {
-                    validationErrors.push("'style.listType' must be 'dash' or 'number'.");
+
+                if (!!listType && !Object.values(BulletTypes).includes(listType)) {
+                    validationErrors.push(
+                        `Invalid style.listType: '${listType}'; must be one of: ${
+                            Object.values(
+                                BulletTypes
+                            ).join(", ")
+                        }.`
+                    );
+                } else {
+                    parsedListTypeOverride = listType;
                 }
             }
         }
 
         // Validate and assign 'omit'
-        if (parsedYml.omit !== undefined) {
+        if (!!parsedYml.omit) {
             if (!Array.isArray(parsedYml.omit)) {
-                validationErrors.push("'omit' must be an array of strings indicating the text of each heading you'd like to omit.");
+                validationErrors.push(
+                    "'omit' must be an array of strings indicating the text of each heading you'd like to omit."
+                );
             } else {
-                for (const item of parsedYml.omit) {
-                    if (typeof item !== 'string') {
-                        validationErrors.push("'omit' array must contain only strings indicating the text of headings you'd like to omit.");
-                        break;
+                for (const [index, item] of parsedYml.omit.entries()) {
+                    if (typeof item !== "string") {
+                        // replace item with stringified version
+                        parsedYml.omit[index] = item === null ? "" : String(item);
                     }
                 }
             }
         }
 
         // Validate and assign 'levels'
-        if (parsedYml.levels !== undefined) {
+        if (!!parsedYml.levels) {
             const levels = parsedYml.levels;
 
-            if (typeof levels !== 'object' || levels === null) {
-                validationErrors.push("'levels' must be an object.");
+            // Attempt to fix malformed YAML (e.g., "min:1 max:6" from missing space after colon)
+            // if (typeof levels === "string") {
+            //     const fixed = sanitizeYaml(levels, true);
+            //     if (fixed) {
+            //         levels = parsedYml.levels = fixed as LocalTocLevels;
+            //     }
+            // }
+
+            if (typeof levels !== "object") {
+                validationErrors.push(
+                    `'levels' is type ${typeof levels}, but must be an object:\n${
+                        JSON.stringify(levels)
+                    }`
+                );
             } else {
                 const { min, max } = levels;
-                
-                if (min !== undefined && !isHeadingLevel(min)) {
-                    validationErrors.push("'levels.min' must be an integer between 1 and 6 indicating the minimum heading level to include.");
+
+                if (!!min && !isHeadingLevel(min)) {
+                    validationErrors.push(
+                        "'levels.min' must be an integer between 1 and 6 indicating the minimum heading level to include."
+                    );
                 }
-                
-                if (max !== undefined && !isHeadingLevel(max)) {
-                    validationErrors.push("'levels.max' must be an integer between 1 and 6 indicating the maximum heading level to include.");
+
+                if (!!max && !isHeadingLevel(max)) {
+                    validationErrors.push(
+                        "'levels.max' must be an integer between 1 and 6 indicating the maximum heading level to include."
+                    );
                 }
-                
-                if (min !== undefined && max !== undefined && min > max) {
-                    validationErrors.push("'levels.min' cannot be greater than 'levels.max'.");
+
+                if (!!min && !!max && min > max) {
+                    validationErrors.push(
+                        "'levels.min' cannot be greater than 'levels.max'."
+                    );
                 }
             }
         }
 
         if (validationErrors.length > 0) {
-            const validationErrorMsg: string = 'Invalid properties in insta-toc settings:\n' + validationErrors.join('\n');
-            
+            const validationErrorMsg: string =
+                "Invalid properties in insta-toc settings:\n"
+                + validationErrors.join("\n");
+
             console.error(validationErrorMsg);
             new Notice(validationErrorMsg);
 
@@ -258,117 +493,140 @@ export class Validator {
                     false
                 );
             }
+            this.hasLocalListTypeOverride = !isNothing(parsedListTypeOverride);
         }
 
         this.localTocSettings = this.updatedLocalSettings;
+        return validationErrors.length === 0;
     }
 
     private cursorInToc(): boolean {
-        return this.cursorPos.line >= this.instaTocSection.position.start.line &&
-               this.cursorPos.line <= this.instaTocSection.position.end.line;
+        return (
+            this.cursorPos.line >= this.instaTocSection.position.start.line
+            && this.cursorPos.line <= this.instaTocSection.position.end.line
+        );
     }
 
     private setFileHeadings(): void {
-        if (this.metadata.headings) {
-            // Store the file headings to reference in later code
-            this.fileHeadings = this.metadata.headings
-                .filter((heading: HeadingCache) => {
-                    const headingText: string = heading.heading.trim();
-                    const headingLevel = heading.level as HeadingLevel;
+        const headings: HeadingCache[] = this.metadata?.headings ?? [];
+        // Store the file headings to reference in later code
+        this.fileHeadings = headings
+            .filter((headingCache: HeadingCache) => {
+                const headingText: string = headingCache.heading.trim();
+                const headingLevel = headingCache.level as HeadingLevel;
 
-                    return (
-                        // Omit headings with "<!-- omit -->"
-                        !headingText.match(/<!--\s*omit\s*-->/) &&
-                        // Omit headings included within local "omit" setting
-                        !this.localTocSettings.omit.includes(headingText) &&
-                        // Omit headings with levels outside of the specified local min/max setting
-                        headingLevel >= this.localTocSettings.levels.min &&
-                        headingLevel <= this.localTocSettings.levels.max &&
-                        // Omit empty headings
-                        headingText.trim().length > 0 &&
-                        // Omit heading text specified in the global exclude setting
-                        !this.plugin.settings.excludedHeadingText.includes(headingText) &&
-                        // Omit heading levels specified in the global exclude setting
-                        !this.plugin.settings.excludedHeadingLevels.includes(headingLevel)
-                    );
-                })
-                .map((heading: HeadingCache) => {
-                    let modifiedHeading = heading.heading;
-                    const patterns: string[] = [];
+                return (
+                    /**
+                     * Omit headings with "<!-- omit -->"
+                     */
+                    !headingText.match(/<!--\s*omit\s*-->/)
+                    /**
+                     * Omit headings included within local "omit" setting
+                     */
+                    && !this.insureLocalTocSetting(
+                        "omit",
+                        (omitList) => omitList.includes(headingText),
+                        false
+                    )
+                    // !this.localTocSettings?.omit?.includes(headingText) &&
+                    /**
+                     * Omit headings with levels outside of the specified local min/max setting
+                     */
+                    && this.insureLocalTocSetting(
+                        "levels",
+                        "min",
+                        (min) => headingLevel >= min,
+                        true
+                    )
+                    && this.insureLocalTocSetting(
+                        "levels",
+                        "max",
+                        (max) => headingLevel <= max,
+                        true
+                    )
+                    // headingLevel >= this.localTocSettings.levels.max &&
+                    // headingLevel <= this.localTocSettings.levels.max &&
+                    /**
+                     * Omit empty headings
+                     */
+                    && headingText.trim().length > 0
+                    /**
+                     * Omit heading text specified in the global excluded heading text setting
+                     */
+                    && !this.plugin.settings.excludedHeadingText.includes(headingText)
+                    /**
+                     * Omit heading levels specified in the global excluded heading levels setting
+                     */
+                    && !this.plugin.settings.excludedHeadingLevels.includes(headingLevel)
+                );
+            })
+            .map((headingCache: HeadingCache) => {
+                let modifiedHeading = headingCache.heading;
+                const patterns: string[] = [];
 
-                    // Process global excluded characters
-                    if (
-                        this.plugin.settings.excludedChars &&
-                        this.plugin.settings.excludedChars.length > 0
-                    ) {
-                        // Escape and join global excluded characters
-                        const escapedGlobalChars = this.plugin.settings.excludedChars.map(
-                            char => escapeRegExp(char)
-                        ).join('');
+                // Process global excluded characters
+                if (
+                    this.plugin.settings.excludedChars
+                    && this.plugin.settings.excludedChars.length > 0
+                ) {
+                    // Escape and join global excluded characters
+                    const escapedGlobalChars = this.plugin.settings.excludedChars
+                        .map((char) => escapeRegExp(char))
+                        .join("");
 
-                        if (escapedGlobalChars.length > 0) {
-                            patterns.push(`[${escapedGlobalChars}]`);
-                        }
+                    if (escapedGlobalChars.length > 0) {
+                        patterns.push(`[${escapedGlobalChars}]`);
                     }
-
-                    // Process local 'exclude' setting
-                    if (
-                        this.localTocSettings.exclude &&
-                        this.localTocSettings.exclude.length > 0
-                    ) {
-                        const excludeStr = this.localTocSettings.exclude;
-
-                        if (isRegexPattern(excludeStr)) {
-                            // It's a regex pattern (e.g., '/\d+/'), remove the slashes
-                            const regexBody = excludeStr.slice(1, -1);
-
-                            patterns.push(`(${regexBody})`);
-                        } else {
-                            // It's a string of characters to exclude
-                            const escapedLocalChars = escapeRegExp(excludeStr);
-
-                            if (escapedLocalChars.length > 0) {
-                                patterns.push(`[${escapedLocalChars}]`);
-                            }
-                        }
-                    }
-
-                    // Build and apply the combined regex pattern
-                    if (patterns.length > 0) {
-                        const combinedPattern = new RegExp(patterns.join('|'), 'g');
-                        modifiedHeading = modifiedHeading.replace(combinedPattern, '');
-                    }
-
-                    return { ...heading, heading: modifiedHeading };
                 }
-            );
-        }
+
+                // Process local 'exclude' setting
+                if (
+                    this.localTocSettings.exclude
+                    && this.localTocSettings.exclude.length > 0
+                ) {
+                    const excludeStr = this.localTocSettings.exclude;
+
+                    if (isRegexPattern(excludeStr)) {
+                        // It's a regex pattern (e.g., '/\d+/'), remove the slashes
+                        const regexBody = excludeStr.slice(1, -1);
+
+                        patterns.push(`(${regexBody})`);
+                    } else {
+                        // It's a string of characters to exclude
+                        const escapedLocalChars = escapeRegExp(excludeStr);
+
+                        if (escapedLocalChars.length > 0) {
+                            patterns.push(`[${escapedLocalChars}]`);
+                        }
+                    }
+                }
+
+                // Build and apply the combined regex pattern
+                if (patterns.length > 0) {
+                    const combinedPattern = new RegExp(patterns.join("|"), "g");
+                    modifiedHeading = modifiedHeading.replace(combinedPattern, "");
+                }
+
+                return { ...headingCache, heading: modifiedHeading };
+            });
     }
 
     // Validates all conditions and asserts the type when true
-    public isValid(): this is Validator & ValidatedInstaToc {
-        const hasInstaTocSectionResult: boolean = this.hasInstaTocSection();
+    public isValid(forceRefresh = false): this is Validator & ValidatedInstaToc {
+        if (!this.hasInstaTocSection()) return false;
 
-        // If file has no insta-toc section, skip processing
-        if (!hasInstaTocSectionResult) {
-            // Set the plugin.hasTocBlock variable, considering the
-            // code block processor in main.ts can't
-            this.plugin.hasTocBlock = false;
+        this.setTocInsertPos();
 
+        const headingsChanged = this.haveHeadingsChanged();
+        const localSettingsChanged = this.haveLocalSettingsChanged();
+
+        if (!forceRefresh && !headingsChanged && !localSettingsChanged) {
             return false;
         }
 
-        const headingsChanged: boolean = this.haveHeadingsChanged();
-        
-        // If the headings have not changed, skip processing
-        if (!headingsChanged) return false;
-
-        // Process and store data for later use
-        this.setTocInsertPos();
         this.configureLocalSettings();
         this.setFileHeadings();
 
-        // Lastly, ensure the cursor is not within the ToC
         return !this.cursorInToc();
     }
 }
