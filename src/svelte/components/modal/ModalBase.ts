@@ -1,7 +1,8 @@
 import { type App, Notice } from "obsidian";
 import type InstaTocPlugin from "src/Plugin";
-import { ComponentMounter, type MaybeAsyncFn } from "src/svelte";
 import { tick } from "svelte";
+import ComponentMounter from "../../ComponentMounter";
+import type { MaybeAsyncFn } from "../../ComponentTypes";
 
 export default abstract class ModalBase {
     protected plugin: InstaTocPlugin;
@@ -35,9 +36,9 @@ export default abstract class ModalBase {
                 await this.close();
             }
         } catch (error) {
-            this.plugin.consoleDebug('Failed to save.\n', error);
-            console.error('Failed to save.\n', error);
-            new Notice('Failed to save. Check console for details.');
+            this.plugin.consoleDebug("Failed to save.\n", error);
+            console.error("Failed to save.\n", error);
+            new Notice("Failed to save. Check console for details.");
         }
     }
 

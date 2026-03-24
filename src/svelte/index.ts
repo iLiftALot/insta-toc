@@ -1,9 +1,3 @@
-import type { Context } from "./ComponentTypes";
-
-export function createSvelteContext<T extends Context>(ctx: T): Map<string, T[keyof T]> {
-    return new Map(Object.entries(ctx)) as Map<string, T[keyof T]>;
-}
-
 /* Component-Related */
 export { default as ComponentMounter } from "./ComponentMounter";
 export { default as ListInputComponent } from "./components/ListInputComponent.svelte";
@@ -17,6 +11,7 @@ export { default as TocActionsToolbar } from "./components/settings/TocActionsTo
 export { TocToolbarState } from "./TocToolbarState.svelte";
 
 /* Mounting/Utilities */
+export { createSvelteContext } from "./Context";
 export { icon } from "./IconMounter";
 export {
     configureRenderedIndent,

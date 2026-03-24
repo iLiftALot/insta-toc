@@ -1,19 +1,28 @@
 import type InstaTocPlugin from "src/Plugin";
-import {
-    createSvelteContext,
-    FoldToggleComponent,
-    type MountedSvelteComponent,
-    TocActionsToolbar,
-    TocToolbarState,
-    type ToolbarState
-} from "src/svelte";
 import type { IndentLevel } from "src/types";
 import { mount, unmount } from "svelte";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import {
+    type Context,
+    type MountedSvelteComponent
+} from "./ComponentTypes";
+import { createSvelteContext } from "./Context";
+import { TocToolbarState, type ToolbarState } from "./TocToolbarState.svelte";
+import FoldToggleComponent from "./components/settings/FoldToggleComponent.svelte";
+import TocActionsToolbar from "./components/settings/TocActionsToolbar.svelte";
 
 const toolbarInstances = new WeakMap<HTMLElement, MountedSvelteComponent>();
 const toggleBtnInstances = new WeakMap<HTMLElement, MountedSvelteComponent[]>();
 const toolbarStates = new WeakMap<HTMLElement, ToolbarState>();
+
+function getSvelteComponentContext(
+    plugin: InstaTocPlugin
+): Map<string, Context[keyof Context]> {
+    const fallbackContext: Context = { plugin };
+    const runtimeContext = (plugin as { context?: Context; }).context;
+
+    return createSvelteContext(runtimeContext ?? fallbackContext);
+}
 
 export async function mountRenderedTocActionButtons(
     plugin: InstaTocPlugin,
@@ -84,7 +93,7 @@ export async function mountRenderedTocActionButtons(
                 ? () => editCodeBlockButton.click()
                 : null
         },
-        context: createSvelteContext(plugin.context)
+        context: getSvelteComponentContext(plugin)
     });
 
     toolbarInstances.set(parent, mounted);
@@ -150,7 +159,7 @@ export async function configureRenderedIndent(
 
         listItem.querySelector(":scope > .insta-toc-fold-toggle-host")?.remove();
         listItem.querySelector(":scope > .fold-toggle")?.remove();
-            
+
         const foldReference: string = getFoldReference(listItem, index);
         const modernFoldKey = `${sourcePath}::${foldParentIndex}::${foldReference}`;
         activeModernFoldKeys.add(modernFoldKey);
@@ -185,7 +194,7 @@ export async function configureRenderedIndent(
                     state.collapsedCount += collapsed ? 1 : -1;
                 }
             },
-            context: createSvelteContext(plugin.context)
+            context: getSvelteComponentContext(plugin)
         });
 
         mountedToggleInstances.push(mounted);

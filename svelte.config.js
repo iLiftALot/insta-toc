@@ -3,10 +3,9 @@ import { sveltePreprocess } from "svelte-preprocess";
 // /** @type {import('@sveltejs/kit').Config} */
 /** @type {import('@sveltejs/vite-plugin-svelte').SvelteConfig} */
 const config = {
-	preprocess: sveltePreprocess(),
+	preprocess: sveltePreprocess({ scss: true }),
 	compilerOptions: {
 		runes: undefined,
-		hmr: true,
 		experimental: {
 			async: true
 		}

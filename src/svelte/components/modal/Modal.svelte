@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends Component<any>">
-    import type { ModalBase, PropsOf } from "src/svelte";
     import { type Component, getContext } from "svelte";
+    import type { PropsOf } from "../../ComponentTypes";
+    import type ModalBase from "./ModalBase";
 
     interface Props {
         modalTitle: string;

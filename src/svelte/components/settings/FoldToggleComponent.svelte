@@ -1,8 +1,8 @@
 <script lang="ts">
     import { icons } from "lucide-svelte/icons";
     import type InstaTocPlugin from "src/Plugin";
-    import { icon } from "src/svelte";
     import { getContext } from "svelte";
+    import { icon } from "../../IconMounter";
 
     interface Props {
         foldKey: string;

@@ -1,9 +1,22 @@
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { fileURLToPath } from 'node:url';
 
-export default defineConfig({
-	plugins: [svelte()],
+const srcRootPath = fileURLToPath(new URL('./src', import.meta.url));
+
+export default defineConfig(({ mode }) => ({
+	plugins: [svelte({
+		compilerOptions: {
+			hmr: false
+		}
+	})],
+	resolve: {
+		conditions: mode === 'test' ? ['browser'] : [],
+		alias: {
+			src: srcRootPath
+		}
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
@@ -31,4 +44,4 @@ export default defineConfig({
 			}
 		]
 	}
-});
+}));

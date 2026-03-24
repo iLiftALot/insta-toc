@@ -1,11 +1,15 @@
-import type { IndentLevel } from 'src/types';
-import { describe, expect, test } from 'vitest';
-import type InstaTocPlugin from '../src/main';
-import { configureRenderedIndent } from '../src/svelte/TocMount.svelte';
+import { describe, expect, test } from "vitest";
+import type InstaTocPlugin from "../src/main";
+import { configureRenderedIndent } from "../src/svelte/TocMount.svelte";
+import type { IndentLevel } from "../src/types";
 
 type FoldPlugin = InstaTocPlugin & {
     __foldState: Map<string, boolean>;
 };
+
+async function flushSvelteDomUpdate(): Promise<void> {
+    await Promise.resolve();
+}
 
 function createFoldPlugin(): FoldPlugin {
     const foldState = new Map<string, boolean>();
@@ -47,7 +51,7 @@ function createFoldPlugin(): FoldPlugin {
 }
 
 function createRenderedTocElement(): HTMLElement {
-    const container = document.createElement('div');
+    const container = document.createElement("div");
     container.innerHTML = `
         <ul>
             <li>
@@ -68,83 +72,86 @@ function getRenderedControls(container: HTMLElement): {
     toggleButton: HTMLButtonElement;
     subList: HTMLUListElement;
 } {
-    const parentItem = container.querySelector('li') as HTMLLIElement;
+    const parentItem = container.querySelector("li") as HTMLLIElement;
     const toggleButton = parentItem.querySelector(
-        ':scope > .fold-toggle'
+        ":scope > .insta-toc-fold-toggle-host > .fold-toggle"
     ) as HTMLButtonElement;
-    const subList = parentItem.querySelector(':scope > ul') as HTMLUListElement;
+    const subList = parentItem.querySelector(":scope > ul") as HTMLUListElement;
 
     return { toggleButton, subList };
 }
 
-describe('TOC fold rendering and memory', () => {
-    test('adds sleek fold toggles and persists collapsed state on click', async () => {
+describe("TOC fold rendering and memory", () => {
+    test("adds sleek fold toggles and persists collapsed state on click", async () => {
         const plugin = createFoldPlugin();
         const container = createRenderedTocElement();
 
-        await configureRenderedIndent(container, 2, plugin, 'notes/my-note.md');
+        await configureRenderedIndent(container, 2, plugin, "notes/my-note.md");
 
         const { toggleButton, subList } = getRenderedControls(container);
 
         expect(toggleButton).toBeTruthy();
-        expect(toggleButton.classList.contains('is-collapsed')).toBe(false);
-        expect(subList.style.display).toBe('');
+        expect(toggleButton.classList.contains("is-collapsed")).toBe(false);
+        expect(subList.style.display).toBe("block");
 
         toggleButton.click();
+        await flushSvelteDomUpdate();
 
-        expect(toggleButton.classList.contains('is-collapsed')).toBe(true);
-        expect(subList.style.display).toBe('none');
+        expect(toggleButton.classList.contains("is-collapsed")).toBe(true);
+        expect(subList.style.display).toBe("none");
         expect(plugin.__foldState.size).toBe(1);
         expect(Array.from(plugin.__foldState.values())[0]).toBe(true);
     });
 
-    test('restores collapsed state after TOC re-render in same file', async () => {
+    test("restores collapsed state after TOC re-render in same file", async () => {
         const plugin = createFoldPlugin();
 
         const firstRender = createRenderedTocElement();
-        await configureRenderedIndent(firstRender, 2, plugin, 'notes/my-note.md');
+        await configureRenderedIndent(firstRender, 2, plugin, "notes/my-note.md");
         const firstToggle = getRenderedControls(firstRender).toggleButton;
         firstToggle.click();
+        await flushSvelteDomUpdate();
 
         const secondRender = createRenderedTocElement();
-        await configureRenderedIndent(secondRender, 2, plugin, 'notes/my-note.md');
+        await configureRenderedIndent(secondRender, 2, plugin, "notes/my-note.md");
 
         const { toggleButton, subList } = getRenderedControls(secondRender);
 
-        expect(toggleButton.classList.contains('is-collapsed')).toBe(true);
-        expect(subList.style.display).toBe('none');
+        expect(toggleButton.classList.contains("is-collapsed")).toBe(true);
+        expect(subList.style.display).toBe("none");
     });
 
-    test('does not leak fold state across different files', async () => {
+    test("does not leak fold state across different files", async () => {
         const plugin = createFoldPlugin();
 
         const firstFileRender = createRenderedTocElement();
-        await configureRenderedIndent(firstFileRender, 2, plugin, 'notes/file-a.md');
+        await configureRenderedIndent(firstFileRender, 2, plugin, "notes/file-a.md");
         getRenderedControls(firstFileRender).toggleButton.click();
+        await flushSvelteDomUpdate();
 
         const secondFileRender = createRenderedTocElement();
-        await configureRenderedIndent(secondFileRender, 2, plugin, 'notes/file-b.md');
+        await configureRenderedIndent(secondFileRender, 2, plugin, "notes/file-b.md");
 
         const { toggleButton, subList } = getRenderedControls(secondFileRender);
 
-        expect(toggleButton.classList.contains('is-collapsed')).toBe(false);
-        expect(subList.style.display).toBe('');
+        expect(toggleButton.classList.contains("is-collapsed")).toBe(false);
+        expect(subList.style.display).toBe("block");
     });
 
-    test('restores from legacy fold key on first render and migrates key format', async () => {
+    test("restores from legacy fold key on first render and migrates key format", async () => {
         const plugin = createFoldPlugin();
 
-        plugin.__foldState.set('notes/my-note.md::notes/my-note#Heading 1::1', true);
+        plugin.__foldState.set("notes/my-note.md::notes/my-note#Heading 1::1", true);
 
         const container = createRenderedTocElement();
-        await configureRenderedIndent(container, 2, plugin, 'notes/my-note.md');
+        await configureRenderedIndent(container, 2, plugin, "notes/my-note.md");
 
         const { toggleButton, subList } = getRenderedControls(container);
 
-        expect(toggleButton.classList.contains('is-collapsed')).toBe(true);
-        expect(subList.style.display).toBe('none');
+        expect(toggleButton.classList.contains("is-collapsed")).toBe(true);
+        expect(subList.style.display).toBe("none");
         expect(
-            plugin.__foldState.get('notes/my-note.md::1::notes/my-note#Heading 1')
+            plugin.__foldState.get("notes/my-note.md::1::notes/my-note#Heading 1")
         ).toBe(true);
     });
 });

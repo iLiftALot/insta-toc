@@ -1,7 +1,8 @@
 <script lang="ts">
     import type InstaTocPlugin from "src/Plugin";
-    import { icon, type TocToolbarState } from "src/svelte";
     import { getContext } from "svelte";
+    import { icon } from "../../IconMounter";
+    import type { TocToolbarState } from "../../TocToolbarState.svelte";
 
     interface Props {
         toolbarState: TocToolbarState;

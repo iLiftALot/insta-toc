@@ -98,8 +98,8 @@ const context = await esbuild
         },
         plugins: [
             esbuildSvelte({
-                preprocess: sveltePreprocess(),
-                compilerOptions: { css: "injected", experimental: { async: true } }
+                preprocess: sveltePreprocess({ scss: true }),
+                compilerOptions: { css: "injected", experimental: { async: true }, hmr: !prod }
             }),
             {
                 name: "copy-main-js",

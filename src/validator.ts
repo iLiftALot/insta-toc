@@ -219,8 +219,7 @@ export class Validator {
     private haveHeadingsChanged(): boolean {
         const currentHeadings: HeadingCache[] = this.metadata.headings || [];
         const noPrevHeadings: boolean = this.previousHeadings.length === 0;
-        const diffHeadingsLength: boolean =
-            currentHeadings.length !== this.previousHeadings.length;
+        const diffHeadingsLength: boolean = currentHeadings.length !== this.previousHeadings.length;
 
         const noHeadingsChange: boolean = noPrevHeadings || diffHeadingsLength
             ? false
@@ -442,9 +441,7 @@ export class Validator {
 
             if (typeof levels !== "object") {
                 validationErrors.push(
-                    `'levels' is type ${typeof levels}, but must be an object:\n${
-                        JSON.stringify(levels)
-                    }`
+                    `'levels' is type ${typeof levels}, but must be an object:\n${JSON.stringify(levels)}`
                 );
             } else {
                 const { min, max } = levels;
@@ -470,8 +467,7 @@ export class Validator {
         }
 
         if (validationErrors.length > 0) {
-            const validationErrorMsg: string =
-                "Invalid properties in insta-toc settings:\n"
+            const validationErrorMsg: string = "Invalid properties in insta-toc settings:\n"
                 + validationErrors.join("\n");
 
             console.error(validationErrorMsg);

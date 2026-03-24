@@ -6,12 +6,21 @@ import {
 } from "vitest/config";
 
 const obsidianMockPath = fileURLToPath(new URL("./mocks/obsidian.ts", import.meta.url));
+const srcRootPath = fileURLToPath(new URL("../src", import.meta.url));
 
-export default defineConfig({
-    plugins: [svelte()],
+export default defineConfig(({ mode }) => ({
+    plugins: [
+        svelte({
+            compilerOptions: {
+                hmr: false
+            }
+        })
+    ],
     resolve: {
+        conditions: mode === "test" ? ["browser"] : [],
         alias: {
-            obsidian: obsidianMockPath
+            obsidian: obsidianMockPath,
+            src: srcRootPath
         }
     },
     test: {
@@ -21,9 +30,12 @@ export default defineConfig({
             "**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
             "**/*.{test,spec}.svelte*"
         ],
-        exclude: [...configDefaults.exclude],
+        exclude: [
+            ...configDefaults.exclude,
+            ".claude/**"
+        ],
         coverage: {
             reporter: ["text", "json", "html"]
         }
     }
-});
+}));

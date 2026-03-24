@@ -7,6 +7,8 @@ export class App {
     fileManager: any = {};
 }
 
+export class BaseComponent {}
+
 export class Plugin {
     app: App;
 
@@ -29,7 +31,7 @@ export class PluginSettingTab {
     app: App;
     plugin: unknown;
     containerEl: any = {
-        empty: () => undefined,
+        empty: () => undefined
     };
 
     constructor(app: App, plugin: unknown) {
@@ -76,10 +78,10 @@ export class SliderComponent {
 
 export class TextComponent {
     inputEl: any = {
-        placeholder: '',
+        placeholder: "",
         classList: {
-            add: (..._classes: string[]) => undefined,
-        },
+            add: (..._classes: string[]) => undefined
+        }
     };
 
     setValue(_value: string): this {
@@ -92,14 +94,14 @@ export class TextComponent {
 }
 
 export class TextAreaComponent {
-    private value = '';
+    private value = "";
 
     inputEl: any = {
-        placeholder: '',
+        placeholder: "",
         classList: {
-            add: (..._classes: string[]) => undefined,
+            add: (..._classes: string[]) => undefined
         },
-        addEventListener: (_event: string, _handler: AnyFn) => undefined,
+        addEventListener: (_event: string, _handler: AnyFn) => undefined
     };
 
     setValue(value: string): this {
@@ -119,18 +121,18 @@ export class TextAreaComponent {
 export class Setting {
     nameEl: any = {
         classList: {
-            add: (..._classes: string[]) => undefined,
-        },
+            add: (..._classes: string[]) => undefined
+        }
     };
 
     controlEl: any = {
-        remove: () => undefined,
+        remove: () => undefined
     };
 
     infoEl: any = {
         classList: {
-            add: (..._classes: string[]) => undefined,
-        },
+            add: (..._classes: string[]) => undefined
+        }
     };
 
     constructor(_containerEl: unknown) {}
@@ -173,7 +175,7 @@ export class Setting {
 }
 
 export class TFile {
-    path = '';
+    path = "";
 }
 
 export class MarkdownView {}
@@ -187,15 +189,21 @@ export class Notice {
 }
 
 export const MarkdownRenderer = {
-    render: async (_app: App, _source: string, _el: HTMLElement, _sourcePath: string, _component: unknown): Promise<void> => {
+    render: async (
+        _app: App,
+        _source: string,
+        _el: HTMLElement,
+        _sourcePath: string,
+        _component: unknown
+    ): Promise<void> => {
         return;
-    },
+    }
 };
 
 export function debounce<TArgs extends any[], TResult>(
     fn: (...args: TArgs) => TResult,
     _wait: number,
-    _immediate?: boolean,
+    _immediate?: boolean
 ): (...args: TArgs) => TResult {
     return (...args: TArgs): TResult => fn(...args);
 }
@@ -208,13 +216,13 @@ export function parseYaml(yaml: string): any {
     const parseScalar = (value: string): any => {
         const trimmed = value.trim();
 
-        if (trimmed === 'true') return true;
-        if (trimmed === 'false') return false;
+        if (trimmed === "true") return true;
+        if (trimmed === "false") return false;
         if (/^[-+]?\d+$/.test(trimmed)) return Number(trimmed);
 
         if (
-            (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-            (trimmed.startsWith("'") && trimmed.endsWith("'"))
+            (trimmed.startsWith("\"") && trimmed.endsWith("\""))
+            || (trimmed.startsWith("'") && trimmed.endsWith("'"))
         ) {
             return trimmed.slice(1, -1);
         }
@@ -225,7 +233,7 @@ export function parseYaml(yaml: string): any {
     while (index < lines.length) {
         const line = lines[index];
 
-        if (!line || line.trim() === '') {
+        if (!line || line.trim() === "") {
             index += 1;
             continue;
         }
@@ -237,7 +245,7 @@ export function parseYaml(yaml: string): any {
 
         const [, key, inlineValue] = keyMatch;
 
-        if (inlineValue !== '') {
+        if (inlineValue !== "") {
             result[key] = parseScalar(inlineValue);
             index += 1;
             continue;
@@ -249,26 +257,26 @@ export function parseYaml(yaml: string): any {
         while (index < lines.length) {
             const current = lines[index];
 
-            if (!current || current.trim() === '') {
+            if (!current || current.trim() === "") {
                 block.push(current);
                 index += 1;
                 continue;
             }
 
-            if (!current.startsWith('  ')) break;
+            if (!current.startsWith("  ")) break;
 
             block.push(current);
             index += 1;
         }
 
-        const nonEmpty = block.filter((entry) => entry.trim() !== '');
+        const nonEmpty = block.filter((entry) => entry.trim() !== "");
 
         if (nonEmpty.length === 0) {
             result[key] = {};
             continue;
         }
 
-        if (nonEmpty.every((entry) => entry.trimStart().startsWith('- '))) {
+        if (nonEmpty.every((entry) => entry.trimStart().startsWith("- "))) {
             result[key] = nonEmpty.map((entry) => parseScalar(entry.trimStart().slice(2)));
             continue;
         }
@@ -292,7 +300,7 @@ export function parseYaml(yaml: string): any {
 }
 
 export function stringifyYaml(value: unknown): string {
-    if (!value || typeof value !== 'object') return '';
+    if (!value || typeof value !== "object") return "";
 
     const lines: string[] = [];
     for (const [key, val] of Object.entries(value as Record<string, any>)) {
@@ -304,7 +312,7 @@ export function stringifyYaml(value: unknown): string {
             continue;
         }
 
-        if (val && typeof val === 'object') {
+        if (val && typeof val === "object") {
             lines.push(`${key}:`);
             for (const [nestedKey, nestedVal] of Object.entries(val)) {
                 lines.push(`  ${nestedKey}: ${String(nestedVal)}`);
@@ -315,9 +323,13 @@ export function stringifyYaml(value: unknown): string {
         lines.push(`${key}: ${String(val)}`);
     }
 
-    return `${lines.join('\n')}\n`;
+    return `${lines.join("\n")}\n`;
 }
 
 export function htmlToMarkdown(input: string): string {
-    return input.replace(/<[^>]*>/g, '');
+    return input.replace(/<[^>]*>/g, "");
+}
+
+export function setIcon(node: HTMLElement, iconName: string): void {
+    node.dataset.icon = iconName;
 }

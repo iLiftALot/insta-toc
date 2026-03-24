@@ -1,11 +1,11 @@
 import { stringifyYaml } from "obsidian";
-import type { MaybeAsyncFn, PropsOf } from "src/svelte/ComponentTypes";
 import type InstaTocPlugin from "src/Plugin";
-import { LocalSettingsComponent, Modal, ModalBase } from "../..";
 import {
     getLocalSettingsBulletTypeSuggestions,
     getLocalSettingsOmitSuggestions
 } from "src/settings/localSettingsCompletionOptions";
+import type { MaybeAsyncFn, PropsOf } from "src/svelte/ComponentTypes";
+import { LocalSettingsComponent, Modal, ModalBase } from "../..";
 
 export class LocalSettingsModal extends ModalBase {
     private yamlContent: string;

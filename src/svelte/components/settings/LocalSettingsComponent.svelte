@@ -26,9 +26,10 @@
         parseYamlArrayItemValue,
         quoteYamlSingleQuoted
     } from "src/settings/localSettingsCompletionUtils";
-    import type { ModalBase, YamlSchemaNode } from "src/svelte";
     import { getContext, onDestroy, onMount, tick } from "svelte";
     import { SvelteSet } from "svelte/reactivity";
+    import type { YamlSchemaNode } from "../../ComponentTypes";
+    import type ModalBase from "../modal/ModalBase";
 
     interface Props {
         initialYaml?: string;

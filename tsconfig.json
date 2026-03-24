@@ -50,8 +50,7 @@
         "src/**/*.d.ts",
         "src/**/*.svelte",
         "src/**/*.svelte.ts",
-        "test/**/*.test.ts",
-        "test/**/*.test.svelte.ts",
+        "test/**/*.ts"
     ],
     "exclude": [
         "node_modules",

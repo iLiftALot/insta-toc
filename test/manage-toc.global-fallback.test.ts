@@ -1,18 +1,13 @@
 import type { HeadingCache } from "obsidian";
-import {
-    describe,
-    expect,
-    test,
-    vi
-} from "vitest";
-import type InstaTocPlugin from "../src/main";
+import { describe, expect, test, vi } from "vitest";
 import { ManageToc } from "../src/ManageToc";
+import type InstaTocPlugin from "../src/main";
 import { getDefaultLocalSettings } from "../src/settings/Settings";
 import type { LocalTocSettings } from "../src/types";
 import type { Validator } from "../src/validator";
 
 function createPluginMock(overrides?: Partial<InstaTocPlugin["settings"]>) {
-    let capturedContent = '';
+    let capturedContent = "";
 
     const plugin = {
         settings: {
@@ -27,31 +22,42 @@ function createPluginMock(overrides?: Partial<InstaTocPlugin["settings"]>) {
         },
         app: {
             workspace: {
-                getActiveFile: () => ({ path: 'test.md' }),
+                getActiveFile: () => ({ path: "test.md" }),
                 getActiveViewOfType: () => ({
-                    data: '',
+                    data: "",
                     editor: {
                         getValue: () => capturedContent,
-                        setValue: vi.fn()
+                        replaceRange: (newContent: string, ..._args: any[]) => {
+                            capturedContent = newContent;
+                        }
+                        // setValue: vi.fn()
                     },
                     previewMode: {
-                        rerender: vi.fn()
+                        rerender: (_full?: boolean) => vi.fn()
                     }
                 })
             },
             vault: {
-                process: vi.fn(async (_file: unknown, fn: (content: string) => string) => {
-                    capturedContent = fn('');
-                }),
+                process: vi.fn(
+                    async (_file: unknown, fn: (content: string) => string) => {
+                        capturedContent = fn(capturedContent);
+                    }
+                ),
                 read: vi.fn(async () => capturedContent)
             }
+        },
+        getViewState() {
+            return "live-preview";
         }
     } as unknown as InstaTocPlugin;
 
     return { plugin, getCapturedContent: () => capturedContent };
 }
 
-function createValidatorMock(localTocSettings: LocalTocSettings, fileHeadings: HeadingCache[]) {
+function createValidatorMock(
+    localTocSettings: LocalTocSettings,
+    fileHeadings: HeadingCache[]
+) {
     const validator = {
         localTocSettings,
         fileHeadings,
@@ -109,7 +115,10 @@ describe("ManageToc global/local setting precedence", () => {
         ] as HeadingCache[];
 
         const { validator } = createValidatorMock(localSettings, fileHeadings);
-        const { plugin, getCapturedContent } = createPluginMock({ tocTitle: "Global Table of Contents", indentSize: 2 });
+        const { plugin, getCapturedContent } = createPluginMock({
+            tocTitle: "Global Table of Contents",
+            indentSize: 2
+        });
 
         await ManageToc.run(plugin, validator);
 
@@ -129,7 +138,9 @@ describe("ManageToc global/local setting precedence", () => {
         const fileHeadings = [{ heading: "Heading 1", level: 1 }] as HeadingCache[];
 
         const { validator } = createValidatorMock(localSettings, fileHeadings);
-        const { plugin, getCapturedContent } = createPluginMock({ tocTitle: "Global Table of Contents" });
+        const { plugin, getCapturedContent } = createPluginMock({
+            tocTitle: "Global Table of Contents"
+        });
 
         await ManageToc.run(plugin, validator);
 

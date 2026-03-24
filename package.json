@@ -9,10 +9,10 @@
         "url": "git+https://github.com/iLiftALot/insta-toc.git"
     },
     "homepage": "https://github.com/iLiftALot/insta-toc#readme",
-    "main": "dist/dev/main.js",
+    "main": "dist/build/main.js",
     "scripts": {
-        "format": "npx dprint fmt --config '/Users/nicholascorbin/.config/dprint/dprint.jsonc' ./src/**/*.{ts,svelte}",
-        "format:check": "npx dprint fmt check --config '/Users/nicholascorbin/.config/dprint/dprint.jsonc' ./src/**/*.{ts,svelte}",
+        "format": "npx dprint fmt --config '/Users/nicholascorbin/.config/dprint/dprint.jsonc' './{src,test}/**/*.{ts,svelte}'",
+        "format:check": "npx dprint fmt check --config '/Users/nicholascorbin/.config/dprint/dprint.jsonc' './{src,test}/**/*.{ts,svelte}'",
         "lint": "npx eslint ./src --ext .ts,.svelte",
         "lint:fix": "npx eslint ./src --ext .ts,.svelte --fix",
         "test": "vitest run --config test/vitest.config.ts",

@@ -1,6 +1,11 @@
 import { BaseComponent } from "obsidian";
-import { type Context, createSvelteContext, type MountedSvelteComponent, type PropsOf } from "src/svelte";
 import { type Component, mount, unmount } from "svelte";
+import type {
+    Context,
+    MountedSvelteComponent,
+    PropsOf
+} from "./ComponentTypes";
+import { createSvelteContext } from "./Context";
 
 export default class ComponentMounter extends BaseComponent {
     private readonly hostEl: HTMLElement;

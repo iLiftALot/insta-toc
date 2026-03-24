@@ -37,17 +37,21 @@ export class ManageToc {
     }
 
     private createTocContent(tocHeadingRefs: string[]): string {
+        const globalSettings = this.plugin.settings as Partial<InstaTocPlugin["settings"]>;
+        const globalTocTitle = globalSettings.tocTitle ?? "Table of Contents";
+        const globalTocTitleLevel = globalSettings.tocTitleLevel ?? 1;
+
         const titleName = this.validator.insureLocalTocSetting(
             "title",
             "name",
             (name) => name,
-            this.plugin.settings.tocTitle
+            globalTocTitle
         );
         const titleLevelPrefix = this.validator.insureLocalTocSetting(
             "title",
             "level",
             (level) => "#".repeat(level),
-            "#".repeat(this.plugin.settings.tocTitleLevel)
+            "#".repeat(globalTocTitleLevel)
         );
         const shouldCenterTitle = this.validator.insureLocalTocSetting(
             "title",
@@ -56,7 +60,7 @@ export class ManageToc {
             false
         );
 
-        const normalizedTitleName = titleName.trim();
+        const normalizedTitleName = String(titleName).trim();
         const centeredTitleName = shouldCenterTitle && normalizedTitleName.length > 0
             ? `<center>${normalizedTitleName}</center>`
             : normalizedTitleName;
@@ -113,13 +117,16 @@ export class ManageToc {
         const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) return;
 
+        // const viewState = (this.plugin as { getViewState?: () => string | null }).getViewState?.() ?? null;
+        const viewState = this.plugin.getViewState() ?? null;
+        if (!viewState) {
+            this.plugin.consoleDebug("Unable to determine view state for TOC update."); // Debug log
+            console.warn("Unable to determine view state for TOC update.");
+            return;
+        }
+
         // If an editor is live (editing/source/live-preview)
-        if (this.plugin.getViewState() !== "preview") {
-            // const cmContent = view.editor.getValue();
-            // if (cmContent !== updatedContent) {
-            //     view.editor.setValue(updatedContent);
-            // }
-            // Replace the old TOC with the updated TOC
+        if (viewState !== "preview") {
             view.editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
         } else {
             const fromLine = tocInsertRange.from.line;

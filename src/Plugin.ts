@@ -14,7 +14,6 @@ import { initPluginContext } from "obsidian-dev-utils/obsidian/Plugin/PluginCont
 import { ManageToc } from "./ManageToc";
 import { deepMerge, handleCodeblockListItem } from "./Utils";
 import { listRegex, localTocSettingsRegex } from "./constants";
-import { LocalSettingsModal } from "./svelte/components/settings/LocalSettingsModal";
 import { PluginSettingsManager } from "./settings/PluginSettingManager";
 import type { InstaTocSettings } from "./settings/Settings";
 import { DEFAULT_SETTINGS, getDefaultLocalSettings } from "./settings/Settings";
@@ -24,6 +23,7 @@ import {
     configureRenderedIndent,
     mountRenderedTocActionButtons
 } from "./svelte/TocMount.svelte";
+import { LocalSettingsModal } from "./svelte/components/settings/LocalSettingsModal";
 import type {
     BulletType,
     EditorData,
@@ -80,9 +80,9 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
             return "preview";
         } else if (state.mode === "source") {
             return state.source === false ? "live-preview" : "source";
-        } else {
-            return null;
         }
+
+        return null;
     }
 
     public get isMobile(): boolean {
@@ -214,8 +214,11 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
     ): Pick<EditorData, F> | Pick<EditorData, "editor" | "cursorPos"> | undefined {
         const shouldUpdateValidator = opts?.updateValidator === true;
         const hasExplicitSelect = opts?.select !== undefined;
-        const selectedFields: readonly ReloadValidatorField[] | undefined =
-            hasExplicitSelect ? opts.select : !opts ? ["editor", "cursorPos"] : undefined;
+        const selectedFields: readonly ReloadValidatorField[] | undefined = hasExplicitSelect
+            ? opts.select
+            : !opts
+            ? ["editor", "cursorPos"]
+            : undefined;
         const requestedFields = new Set<ReloadValidatorField>(selectedFields ?? []);
 
         // Determine which values are actually needed
@@ -343,9 +346,8 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
 
     private syncLocalListTypeOverride(sourcePath: string): void {
         if (this.validator.hasLocalListTypeOverride) {
-            this.tocLocalListTypeOverrideByPath[sourcePath] =
-                this.validator.localTocSettings.style?.listType
-                    ?? this.settings.bulletType;
+            this.tocLocalListTypeOverrideByPath[sourcePath] = this.validator.localTocSettings.style?.listType
+                ?? this.settings.bulletType;
         } else {
             delete this.tocLocalListTypeOverrideByPath[sourcePath];
         }
@@ -417,8 +419,7 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
 
         state.validator.localTocSettings = mergedInitialSettings;
         state.validator.updatedLocalSettings = mergedInitialSettings;
-        state.validator.hasLocalListTypeOverride =
-            mergedInitialSettings.style.listType !== null;
+        state.validator.hasLocalListTypeOverride = mergedInitialSettings.style.listType !== null;
 
         await new LocalSettingsModal(this, async (result: string): Promise<boolean> => {
             const didApply = this.validator.applyLocalSettingsYaml(result);
