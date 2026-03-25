@@ -12,7 +12,7 @@ export default [
             'help/**',
             'main.js',
             'node_modules/**',
-            'esbuild.config.mjs',
+            'esbuild.config.js',
             'version-bump.mjs',
             '**/*.d.ts'
         ]

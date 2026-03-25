@@ -2,12 +2,11 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
-import svelteConfig from './svelte.config.js';
 
 const srcRootPath = fileURLToPath(new URL('./src', import.meta.url));
 
 export default defineConfig(({ mode }) => ({
-    plugins: [svelte(svelteConfig)],
+    plugins: [svelte()],
     resolve: {
         conditions: mode === 'test' ? ['browser'] : [],
         alias: {

@@ -16,9 +16,10 @@ export default abstract class ModalBase {
     ) {
         this.app = plugin.app;
         this.plugin = plugin;
-        this.onSubmit = onSubmit;
         this.mounter = new ComponentMounter(document.body);
+        this.onSubmit = onSubmit;
 
+        // Maintain `this` context within Svelte component event handlers
         this.close = this.close.bind(this);
         this.submit = this.submit.bind(this);
     }

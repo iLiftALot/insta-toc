@@ -19,14 +19,18 @@
 </script>
 
 <div class="modal-container mod-dim custom-modal-container">
-    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+    <!--
+        svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions
+    -->
     <div
         class="modal-bg"
         style="opacity: 0.85"
         onclick={componentClassInstance.close}>
     </div>
     <div class="modal custom-modal">
-        <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+        <!--
+            svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions
+        -->
         <div
             class="modal-close-button mod-raised clickable-icon custom-modal-close-button"
             aria-label="Close"

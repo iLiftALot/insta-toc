@@ -4,13 +4,12 @@ import {
     configDefaults,
     defineConfig
 } from "vitest/config";
-import svelteConfig from "../svelte.config";
 
 const obsidianMockPath = fileURLToPath(new URL("./mocks/obsidian.ts", import.meta.url));
 const srcRootPath = fileURLToPath(new URL("../src", import.meta.url));
 
 export default defineConfig(({ mode }) => ({
-    plugins: [svelte(svelteConfig)],
+    plugins: [svelte()],
     resolve: {
         conditions: mode === "test" ? ["browser"] : [],
         alias: {
