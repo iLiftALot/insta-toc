@@ -2,7 +2,7 @@ import type { SliderComponent, TextComponent } from "obsidian";
 import { debounce } from "obsidian";
 import type {
     TypedDropdownComponent
-} from "obsidian-dev-utils/obsidian/Components/setting-components/typed-dropdown-component";
+} from "obsidian-dev-utils/obsidian/components/setting-components/typed-dropdown-component";
 import {
     PluginSettingsTabBase,
     SAVE_TO_FILE_CONTEXT
