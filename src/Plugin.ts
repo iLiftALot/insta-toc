@@ -26,8 +26,8 @@ import {
 import { LocalSettingsModal } from "./svelte/components/settings/LocalSettingsModal";
 import type {
     BulletType,
-    EditorData,
     LocalTocSettings,
+    EditorData,
     PluginTypes,
     ReloadedTocState,
     ReloadValidatorField,
@@ -68,6 +68,13 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
             plugin: this,
             componentClassInstance: undefined
         } satisfies Context;
+    }
+
+    /** CAUTION: Only call when you absolutely need to renew the editor instance */
+    public get editor(): Editor {
+        const editor = this.app.workspace.activeEditor?.editor;
+        assert(editor, "No active editor found.");
+        return editor;
     }
 
     public getViewState(): ViewState {
@@ -258,7 +265,6 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
                 this.validator.update(
                     this,
                     metadataCache,
-                    editor,
                     cursorPos,
                     resolvedPath
                 );
@@ -266,7 +272,6 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
                 this.validator = new Validator(
                     this,
                     metadataCache,
-                    editor,
                     cursorPos,
                     resolvedPath
                 );
@@ -413,8 +418,7 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
             : getDefaultLocalSettings();
         const mergedInitialSettings = deepMerge<LocalTocSettings>(
             getDefaultLocalSettings(),
-            initialSettings,
-            false
+            initialSettings
         );
 
         state.validator.localTocSettings = mergedInitialSettings;

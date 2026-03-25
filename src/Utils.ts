@@ -3,11 +3,13 @@ import { htmlToMarkdown } from "obsidian";
 import type InstaTocPlugin from "./Plugin";
 import {
     markdownLinkRegex,
+    mergicianSettings,
     tagLinkRegex,
     wikiLinkNoAliasRegex,
     wikiLinkWithAliasRegex
 } from "./constants";
 import type { HandledLink, HeadingLevel, ListItemContext } from "./types";
+import { mergician, type MergicianOptions } from "mergician";
 
 /**
  * Handle the codeblock list item and return the indent level and navigation link
@@ -209,30 +211,9 @@ export function isRecord<T>(value: T): value is Record<PropertyKey, any> {
 export function deepMerge<T extends Record<keyof T, any>>(
     target: Partial<T>,
     source: Partial<T>,
-    dedupeArrays = true
+    mergeSettings?: MergicianOptions
 ): T {
-    if (isRecord(target) && isRecord(source)) {
-        for (const key of Object.keys(source) as Array<keyof T>) {
-            const targetValue = target[key];
-            const sourceValue = source[key];
-
-            if (isRecord(sourceValue)) {
-                if (!targetValue) {
-                    (target as any)[key] = {};
-                }
-
-                deepMerge(target[key] as any, sourceValue as any);
-            } else if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
-                if (dedupeArrays) {
-                    (target as any)[key] = [...new Set(targetValue.concat(sourceValue))];
-                } else {
-                    (target as any)[key] = sourceValue;
-                }
-            } else {
-                (target as any)[key] = sourceValue;
-            }
-        }
-    }
-
-    return target as T;
+    const settings = { ...mergicianSettings, ...(mergeSettings ?? {}) };
+    const merger = mergician(settings);
+    return merger(target, source);
 }

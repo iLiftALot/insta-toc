@@ -125,10 +125,10 @@ export class ManageToc {
             return;
         }
 
-        // If an editor is live (editing/source/live-preview)
-        if (viewState !== "preview") {
-            view.editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
-        } else {
+        // Only need to replace editor content if editor is in source/live-preview (edit) mode
+        this.plugin.editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
+        // If an editor is preview (reading) mode...
+        if (viewState === "preview") {
             const fromLine = tocInsertRange.from.line;
             const fromCh = tocInsertRange.from.ch;
             const toLine = tocInsertRange.to.line;
@@ -156,10 +156,10 @@ export class ManageToc {
 
             // Re-read the updated file content so both editor and preview have it
             const updatedContent = await this.plugin.app.vault.read(activeFile);
-            view.data = updatedContent;
-
+            
             // Force the reading-mode preview to re-render with the new content
-            view.previewMode.rerender(false);
+            view.previewMode.renderer.set(updatedContent);
+            // view.previewMode.setEphemeralState // scrolling
         }
     }
 

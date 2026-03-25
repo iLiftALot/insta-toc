@@ -81,14 +81,7 @@ export const defaultExcludedChars: string[] = [
     "\\"
 ];
 
-export const mergicianSettings: MergicianOptions = {
-    onlyCommonKeys: false,
-    onlyUniversalKeys: false,
-    skipCommonKeys: false,
-    skipUniversalKeys: false,
-    dedupArrays: true,
-    sortArrays: true
-};
+export const mergicianSettings: MergicianOptions = { };
 
 export const localSettingsComponentPlaceholder = `\
 title:

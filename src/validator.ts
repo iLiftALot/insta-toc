@@ -47,13 +47,12 @@ export class Validator {
     constructor(
         plugin: InstaTocPlugin,
         metadata: CachedMetadata,
-        editor: Editor,
         cursorPos: EditorPosition,
         activeFilePath: string
     ) {
         this.plugin = plugin;
         this.metadata = metadata;
-        this.editor = editor;
+        this.editor = plugin.editor;
         this.cursorPos = cursorPos;
         this.activeFilePath = activeFilePath;
         this.fileHeadings = [];
@@ -64,29 +63,27 @@ export class Validator {
     public update(
         plugin: InstaTocPlugin,
         metadata: CachedMetadata,
-        editor: Editor,
         cursorPos: EditorPosition,
         activeFilePath: string,
-        localTocSettings?: LocalTocSettings
+        // localTocSettings?: LocalTocSettings
     ): void {
         this.plugin = plugin;
         this.metadata = metadata;
-        this.editor = editor;
         this.cursorPos = cursorPos;
 
-        this.resetStateForFileSwitch(activeFilePath, localTocSettings);
+        this.resetStateForFileSwitch(activeFilePath); //, localTocSettings);
     }
 
     private resetStateForFileSwitch(
         activeFilePath: string,
-        localTocSettings?: LocalTocSettings
+        // localTocSettings?: LocalTocSettings
     ): void {
         if (this.activeFilePath === activeFilePath) return;
 
         this.activeFilePath = activeFilePath;
         this.previousHeadings = [];
         this.previousLocalSettingsRaw = "";
-        this.localTocSettings = localTocSettings ?? getDefaultLocalSettings();
+        this.localTocSettings = getDefaultLocalSettings();
         this.updatedLocalSettings = undefined;
         this.fileHeadings = [];
         this.hasLocalListTypeOverride = false;
@@ -202,7 +199,7 @@ export class Validator {
     }
 
     private haveLocalSettingsChanged(): boolean {
-        const tocRange = this.editor.getRange(
+        const tocRange = this.plugin.editor.getRange(
             this.tocInsertPos.from,
             this.tocInsertPos.to
         );
@@ -255,7 +252,7 @@ export class Validator {
         const instaTocSection: SectionCache | undefined = this.metadata.sections.find(
             (section: SectionCache) =>
                 section.type === "code"
-                && this.editor.getLine(section.position.start.line)
+                && this.plugin.editor.getLine(section.position.start.line)
                     === `\`\`\`${instaTocCodeBlockId}`
         );
 
@@ -282,7 +279,7 @@ export class Validator {
     }
 
     private configureLocalSettings(): void {
-        const tocRange = this.editor.getRange(
+        const tocRange = this.plugin.editor.getRange(
             this.tocInsertPos.from,
             this.tocInsertPos.to
         );
@@ -298,14 +295,12 @@ export class Validator {
     public applyLocalSettingsYaml(yml: string): boolean {
         const previousLocalSettings = deepMerge<LocalTocSettings>(
             getDefaultLocalSettings(),
-            this.localTocSettings,
-            false
+            this.localTocSettings
         );
         const previousUpdatedSettings = this.updatedLocalSettings
             ? deepMerge<LocalTocSettings>(
                 getDefaultLocalSettings(),
-                this.updatedLocalSettings,
-                false
+                this.updatedLocalSettings
             )
             : undefined;
         const previousHasLocalListTypeOverride = this.hasLocalListTypeOverride;
@@ -480,13 +475,12 @@ export class Validator {
                 this.updatedLocalSettings = deepMerge<LocalTocSettings>(
                     this.localTocSettings,
                     parsedYml,
-                    true
+                    { dedupArrays: true }
                 );
             } else {
                 this.updatedLocalSettings = deepMerge<LocalTocSettings>(
                     this.updatedLocalSettings,
-                    parsedYml,
-                    false
+                    parsedYml
                 );
             }
             this.hasLocalListTypeOverride = !isNothing(parsedListTypeOverride);
