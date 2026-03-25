@@ -117,7 +117,6 @@ export class ManageToc {
         const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) return;
 
-        // const viewState = (this.plugin as { getViewState?: () => string | null }).getViewState?.() ?? null;
         const viewState = this.plugin.getViewState() ?? null;
         if (!viewState) {
             this.plugin.consoleDebug("Unable to determine view state for TOC update."); // Debug log
@@ -125,8 +124,22 @@ export class ManageToc {
             return;
         }
 
-        // Only need to replace editor content if editor is in source/live-preview (edit) mode
-        this.plugin.editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
+        // Only need to replace editor content if editor is in source/live-preview (edit) mode.
+        // Use CM6 dispatch directly to avoid the scrollIntoView side-effect
+        // that Obsidian's Editor.replaceRange() includes by default.
+        const editor = this.plugin.editor;
+        const cmView = editor.cm;
+        if (cmView) {
+            const fromOffset = editor.posToOffset(tocInsertRange.from);
+            const toOffset = editor.posToOffset(tocInsertRange.to);
+            cmView.dispatch({
+                changes: { from: fromOffset, to: toOffset, insert: newTocBlock },
+                scrollIntoView: false
+            });
+        } else {
+            // Fallback to Obsidian API if CM view isn't accessible
+            editor.replaceRange(newTocBlock, tocInsertRange.from, tocInsertRange.to);
+        }
         // If an editor is preview (reading) mode...
         if (viewState === "preview") {
             const fromLine = tocInsertRange.from.line;
@@ -156,10 +169,9 @@ export class ManageToc {
 
             // Re-read the updated file content so both editor and preview have it
             const updatedContent = await this.plugin.app.vault.read(activeFile);
-            
+
             // Force the reading-mode preview to re-render with the new content
             view.previewMode.renderer.set(updatedContent);
-            // view.previewMode.setEphemeralState // scrolling
         }
     }
 
