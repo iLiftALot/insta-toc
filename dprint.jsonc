@@ -1,0 +1,64 @@
+{
+  "typescript": {
+      "bracePosition": "sameLine",
+      "constructSignature.spaceAfterNewKeyword": true,
+      "constructorType.spaceAfterNewKeyword": true,
+      "exportDeclaration.forceMultiLine": "whenMultiple",
+      "functionExpression.spaceAfterFunctionKeyword": true,
+      "importDeclaration.forceMultiLine": "never",
+      "module.sortImportDeclarations": "caseSensitive",
+      "lineWidth": 120,
+      "indentWidth": 4,
+      "semiColons": "always",
+      "quoteProps": "asNeeded",
+      "quoteStyle": "alwaysDouble",
+      "trailingCommas": "never",
+      "useBraces": "whenNotSingleLine",
+      "nextControlFlowPosition": "sameLine",
+      "operatorPosition": "nextLine",
+      "preferHanging": false,
+      "preferSingleLine": false,
+      "arrowFunction.useParentheses": "force"
+  },
+  "json": {
+    "indentWidth": 4,
+    "trailingCommas": "never"
+  },
+  "markdown": {
+  },
+  "toml": {
+    "indentWidth": 4
+  },
+  "malva": {
+  },
+  "markup": {
+      "closingBracketSameLine": true,
+      "indentWidth": 4,
+      "scriptIndent": true,
+      "svelte.styleIndent": true,
+      "strictSvelteAttr": false,
+      "formatComments": true,
+      "whitespaceSensitivity": "strict",
+      "scriptFormatter": "dprint",
+      "ignoreCommentDirective": "markup-fmt-ignore",
+      "ignoreFileCommentDirective": "dprint-ignore-file"
+  },
+  "yaml": {
+    "indentWidth": 2
+  },
+  "excludes": [
+    "dist",
+    "**/node_modules",
+    "**/*-lock.json",
+    "*venv"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.95.15.wasm",
+    "https://plugins.dprint.dev/json-0.21.1.wasm",
+    "https://plugins.dprint.dev/markdown-0.21.1.wasm",
+    "https://plugins.dprint.dev/toml-0.7.0.wasm",
+    "https://plugins.dprint.dev/g-plane/malva-v0.15.2.wasm",
+    "https://plugins.dprint.dev/g-plane/markup_fmt-v0.26.0.wasm",
+    "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm"
+  ]
+}

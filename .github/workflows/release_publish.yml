@@ -46,7 +46,7 @@ jobs:
         run: npm run lint
 
       - name: Format code
-        run: npm run format:check
+        run: npm run format:prod
 
       - name: Build Project
         run: npm run build
