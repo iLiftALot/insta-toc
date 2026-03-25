@@ -14,50 +14,12 @@ import {
     test,
     vi
 } from "vitest";
-import type InstaTocPlugin from "../src/main";
 import {
     getLocalSettingsBulletTypeSuggestions,
     getLocalSettingsOmitSuggestions
 } from "../src/settings/localSettingsCompletionOptions";
 import { Validator } from "../src/validator";
-
-function createPluginMock(): InstaTocPlugin {
-    return {
-        settings: {
-            bulletType: "dash",
-            indentSize: 2,
-            updateDelay: 2000,
-            tocTitle: "Table of Contents",
-            excludedHeadingLevels: [],
-            excludedHeadingText: [],
-            excludedChars: ["*", "_", "`", "==", "~~", "{", "}", "#", "\\"]
-        },
-        consoleDebug: console.debug
-    } as unknown as InstaTocPlugin;
-}
-
-function createEditor(lines: string[]): Editor {
-    return {
-        getLine(line: number): string {
-            return lines[line] ?? "";
-        },
-        getRange(from: EditorPosition, to: EditorPosition): string {
-            if (from.line === to.line) {
-                return (lines[from.line] ?? "").slice(from.ch, to.ch);
-            }
-
-            const chunks: string[] = [];
-            chunks.push((lines[from.line] ?? "").slice(from.ch));
-
-            for (let line = from.line + 1; line < to.line; line += 1) {
-                chunks.push(lines[line] ?? "");
-            }
-
-            chunks.push((lines[to.line] ?? "").slice(0, to.ch));
-            return chunks.join("\n");
-        }
-    } as unknown as Editor;
-}
+import { createEditor, createPluginMock } from "./mocks/pluginClassMocks";
 
 function createHeading(heading: string, level: number, line: number): HeadingCache {
     const position: Pos = {
@@ -146,10 +108,10 @@ describe("Validator local settings behavior", () => {
     });
 
     test("re-validates when local settings change but headings do not", () => {
-        const plugin = createPluginMock();
         const stableHeadings: HeadingCache[] = [createHeading("Heading 1", 1, 10), createHeading("Heading 2", 2, 11)];
 
         const initial = createFixture(["title:", "  name: Table of Contents"], stableHeadings);
+        const { plugin, setEditor } = createPluginMock(undefined, initial.editor);
 
         const validator = new Validator(plugin, initial.metadata, initial.cursorPos, initial.filePath);
 
@@ -160,6 +122,8 @@ describe("Validator local settings behavior", () => {
             ["levels:", "  min: 2", "  max: 6", "omit:", "  - Heading 2"],
             stableHeadings
         );
+
+        setEditor(updatedLocalConfigOnly.editor);
 
         validator.update(
             plugin,
@@ -174,10 +138,10 @@ describe("Validator local settings behavior", () => {
     });
 
     test("returns false when neither headings nor local config changed", () => {
-        const plugin = createPluginMock();
         const headings: HeadingCache[] = [createHeading("Heading 1", 1, 10), createHeading("Heading 2", 2, 11)];
 
         const fixture = createFixture(["title:", "  name: Table of Contents"], headings);
+        const { plugin } = createPluginMock(undefined, fixture.editor);
 
         const validator = new Validator(plugin, fixture.metadata, fixture.cursorPos, fixture.filePath);
 
@@ -189,8 +153,8 @@ describe("Validator local settings behavior", () => {
     });
 
     test("handles missing heading cache safely", () => {
-        const plugin = createPluginMock();
         const noHeadingsFixture = createFixture(["title:", "  name: Table of Contents"], undefined);
+        const { plugin } = createPluginMock(undefined, noHeadingsFixture.editor);
 
         const validator = new Validator(
             plugin,
@@ -204,7 +168,6 @@ describe("Validator local settings behavior", () => {
     });
 
     test("resets local settings to global defaults when switching files", () => {
-        const plugin = createPluginMock();
         const headings: HeadingCache[] = [createHeading("Heading 1", 1, 10), createHeading("Heading 2", 2, 11)];
 
         const firstFile = createFixture(
@@ -212,6 +175,7 @@ describe("Validator local settings behavior", () => {
             headings,
             "folder/file-a.md"
         );
+        const { plugin, setEditor } = createPluginMock(undefined, firstFile.editor);
 
         const validator = new Validator(
             plugin,
@@ -225,6 +189,8 @@ describe("Validator local settings behavior", () => {
         expect(validator.fileHeadings).toEqual([]);
 
         const secondFile = createFixture([], headings, "folder/file-b.md");
+
+        setEditor(secondFile.editor);
 
         validator.update(plugin, secondFile.metadata, secondFile.cursorPos, secondFile.filePath);
 

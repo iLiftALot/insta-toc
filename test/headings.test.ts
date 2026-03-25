@@ -19,9 +19,12 @@ import {
     TestNames,
     testOmitHeadingRegex,
     testStandardHeadings
-} from "./testingObjects";
+} from "./mocks/testingObjects";
 
-function testGetIndentationLevel(headingLevel: number, headingLevelStack: number[]) {
+function testGetIndentationLevel(
+    headingLevel: number,
+    headingLevelStack: number[]
+): { currentIndentLevel: number; headingLevelStack: number[]; } {
     // Pop from the stack until we find a heading level less than the current
     while (
         headingLevelStack.length > 0 // Avoid indentation for the first heading

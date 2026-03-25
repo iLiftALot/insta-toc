@@ -29,20 +29,20 @@
 }
 
 /**
-  * Prevents the additional built-in indentation
-  * guide from showing while in preview (reading)
-  * mode.
-  */
-.insta-toc-rendered li>ul,
-.insta-toc-rendered li>ol {
+ * Prevents the additional built-in indentation
+ * guide from showing while in preview (reading)
+ * mode.
+ */
+.insta-toc-rendered li > ul,
+.insta-toc-rendered li > ol {
   &::before {
-    content: '' !important;
+    content: "" !important;
     display: none !important;
   }
 }
 
 /* Top-level items without a fold toggle still need a subtle text inset */
-.insta-toc-rendered>ul>.insta-toc-item:not(.insta-toc-fold-parent) {
+.insta-toc-rendered > ul > .insta-toc-item:not(.insta-toc-fold-parent) {
   margin-inline-start: var(--insta-toc-toggle-slot) !important;
 
   &.is-mobile {
@@ -54,12 +54,21 @@
  * Nested children that are not fold-parents need a bit more inset than sibling
  * fold-parents (which reserve inline space for the toggle button).
  */
-.insta-toc-rendered .insta-toc-item>ul>.insta-toc-item:not(.insta-toc-fold-parent) {
+.insta-toc-rendered
+  .insta-toc-item
+  > ul > .insta-toc-item:not(.insta-toc-fold-parent) {
   /* margin-inline-start: calc(var(--insta-toc-indent-size) - var(--insta-toc-nonfold-extra-indent)) !important; */
-  margin-inline-start: calc(var(--insta-toc-toggle-slot) + var(--insta-toc-nonfold-extra-indent)) !important;
+  margin-inline-start: calc(
+    var(--insta-toc-toggle-slot) + var(--insta-toc-nonfold-extra-indent)
+  ) !important;
 
   &.is-mobile {
-    margin-inline-start: calc(2.2 * (var(--insta-toc-toggle-slot) + var(--insta-toc-nonfold-extra-indent))) !important;
+    margin-inline-start: calc(
+      2.2 *
+        (
+        var(--insta-toc-toggle-slot) + var(--insta-toc-nonfold-extra-indent)
+      )
+    ) !important;
   }
 }
 
@@ -68,7 +77,7 @@
   margin-inline-start: 0px !important;
 }
 
-.insta-toc-action-button>svg {
+.insta-toc-action-button > svg {
   width: 16px;
   height: 16px;
 }

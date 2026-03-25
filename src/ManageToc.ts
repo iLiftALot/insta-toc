@@ -81,7 +81,7 @@ export class ManageToc {
             .join("\n\n");
     }
 
-    // Generates a new insta-toc codeblock with normal dash-type bullets
+    /** Generates a new insta-toc codeblock with normal dash-type bullets */
     private generateToc(): string {
         const tocHeadingRefs: string[] = [];
         const fileHeadings: HeadingCache[] = this.validator.fileHeadings;
@@ -117,7 +117,7 @@ export class ManageToc {
         const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) return;
 
-        const viewState = this.plugin.getViewState() ?? null;
+        const viewState = this.plugin.getViewState();
         if (!viewState) {
             this.plugin.consoleDebug("Unable to determine view state for TOC update."); // Debug log
             console.warn("Unable to determine view state for TOC update.");

@@ -1,82 +1,82 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "Run Vitest",
-			"type": "shell",
-			"command": "zsh \"${workspaceFolder}/.vscode/run-vitest.zsh\"",
-			"group": {
-				"kind": "test",
-				"isDefault": true
-			},
-			"runOptions": {
-				"instanceLimit": 1,
-				"runOn": "default",
-				"reevaluateOnRerun": true
-			},
-			"icon": {
-				"id": "go-to-search",
-				"color": "terminal.ansiCyan"
-			},
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": true,
-				"panel": "shared",
-				"showReuseMessage": true,
-				"clear": false
-			},
-			"problemMatcher": []
-		},
-		{
-			"label": "Run npm test",
-			"type": "shell",
-			"command": "npm",
-			"args": [
-				"test"
-			],
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Run npm lint",
-			"type": "shell",
-			"command": "npm",
-			"args": [
-				"run",
-				"lint"
-			],
-			"isBackground": false,
-			"group": "test"
-		},
-		{
-			"label": "Run npm build",
-			"type": "shell",
-			"command": "npm",
-			"args": [
-				"run",
-				"build"
-			],
-			"isBackground": false,
-			"group": "build"
-		},
-		{
-			"label": "Run npm lint clean",
-			"type": "shell",
-			"command": "npm",
-			"args": [
-				"run",
-				"lint"
-			],
-			"isBackground": false,
-			"group": "test",
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": true,
-				"panel": "dedicated",
-				"clear": true
-			}
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Vitest",
+            "type": "shell",
+            "command": "zsh \"${workspaceFolder}/.vscode/run-vitest.zsh\"",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "runOptions": {
+                "instanceLimit": 1,
+                "runOn": "default",
+                "reevaluateOnRerun": true
+            },
+            "icon": {
+                "id": "go-to-search",
+                "color": "terminal.ansiCyan"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run npm test",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "test"
+            ],
+            "isBackground": false,
+            "group": "test"
+        },
+        {
+            "label": "Run npm lint",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "lint"
+            ],
+            "isBackground": false,
+            "group": "test"
+        },
+        {
+            "label": "Run npm build",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "build"
+            ],
+            "isBackground": false,
+            "group": "build"
+        },
+        {
+            "label": "Run npm lint clean",
+            "type": "shell",
+            "command": "npm",
+            "args": [
+                "run",
+                "lint"
+            ],
+            "isBackground": false,
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "dedicated",
+                "clear": true
+            }
+        }
+    ]
 }
