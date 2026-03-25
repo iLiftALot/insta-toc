@@ -1,3 +1,4 @@
+import { mergician, type MergicianOptions } from "mergician";
 import type { App, TFile } from "obsidian";
 import { htmlToMarkdown } from "obsidian";
 import type InstaTocPlugin from "./Plugin";
@@ -9,7 +10,6 @@ import {
     wikiLinkWithAliasRegex
 } from "./constants";
 import type { HandledLink, HeadingLevel, ListItemContext } from "./types";
-import { mergician, type MergicianOptions } from "mergician";
 
 /**
  * Handle the codeblock list item and return the indent level and navigation link

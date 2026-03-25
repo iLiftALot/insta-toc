@@ -64,18 +64,18 @@ export class Validator {
         plugin: InstaTocPlugin,
         metadata: CachedMetadata,
         cursorPos: EditorPosition,
-        activeFilePath: string,
+        activeFilePath: string
         // localTocSettings?: LocalTocSettings
     ): void {
         this.plugin = plugin;
         this.metadata = metadata;
         this.cursorPos = cursorPos;
 
-        this.resetStateForFileSwitch(activeFilePath); //, localTocSettings);
+        this.resetStateForFileSwitch(activeFilePath); // , localTocSettings);
     }
 
     private resetStateForFileSwitch(
-        activeFilePath: string,
+        activeFilePath: string
         // localTocSettings?: LocalTocSettings
     ): void {
         if (this.activeFilePath === activeFilePath) return;

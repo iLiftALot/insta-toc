@@ -81,7 +81,7 @@ export const defaultExcludedChars: string[] = [
     "\\"
 ];
 
-export const mergicianSettings: MergicianOptions = { };
+export const mergicianSettings: MergicianOptions = {};
 
 export const localSettingsComponentPlaceholder = `\
 title:

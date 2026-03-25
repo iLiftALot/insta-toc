@@ -26,8 +26,8 @@ import {
 import { LocalSettingsModal } from "./svelte/components/settings/LocalSettingsModal";
 import type {
     BulletType,
-    LocalTocSettings,
     EditorData,
+    LocalTocSettings,
     PluginTypes,
     ReloadedTocState,
     ReloadValidatorField,
@@ -404,6 +404,7 @@ export default class InstaTocPlugin extends PluginBase<PluginTypes> {
                 this.refreshRenderedTocStyles(state.activeFile.path, false);
             },
             this.settings.updateDelay,
+            // true
             false
         );
     }

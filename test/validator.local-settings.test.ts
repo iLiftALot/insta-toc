@@ -151,8 +151,7 @@ describe("Validator local settings behavior", () => {
 
         const initial = createFixture(["title:", "  name: Table of Contents"], stableHeadings);
 
-        const validator = new Validator(plugin, initial.metadata,
-            initial.cursorPos, initial.filePath);
+        const validator = new Validator(plugin, initial.metadata, initial.cursorPos, initial.filePath);
 
         expect(validator.isValid()).toBe(true);
         expect(validator.fileHeadings.map((h) => h.heading)).toEqual(["Heading 1", "Heading 2"]);
@@ -180,13 +179,11 @@ describe("Validator local settings behavior", () => {
 
         const fixture = createFixture(["title:", "  name: Table of Contents"], headings);
 
-        const validator = new Validator(plugin, fixture.metadata,
-            fixture.cursorPos, fixture.filePath);
+        const validator = new Validator(plugin, fixture.metadata, fixture.cursorPos, fixture.filePath);
 
         expect(validator.isValid()).toBe(true);
 
-        validator.update(plugin, fixture.metadata,
-            fixture.cursorPos, fixture.filePath);
+        validator.update(plugin, fixture.metadata, fixture.cursorPos, fixture.filePath);
 
         expect(validator.isValid()).toBe(false);
     });
@@ -229,8 +226,7 @@ describe("Validator local settings behavior", () => {
 
         const secondFile = createFixture([], headings, "folder/file-b.md");
 
-        validator.update(plugin, secondFile.metadata,
-            secondFile.cursorPos, secondFile.filePath);
+        validator.update(plugin, secondFile.metadata, secondFile.cursorPos, secondFile.filePath);
 
         expect(validator.isValid()).toBe(true);
         expect(validator.localTocSettings.levels.min).toBeNull();
