@@ -1,48 +1,32 @@
 name: Release and Publish
 
 on:
-  pull_request:
-    branches:
-      - master
-    types:
-      - closed
   workflow_dispatch:
-    inputs:
-      version_type:
-        description: 'Specify version bump type'
-        required: false
-        default: 'patch'
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
-    if: |
-      github.event_name == 'workflow_dispatch' || (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.merged == true &&
-        github.event.pull_request.base.ref == 'master'
-      )
-    
+    if: ${{ github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4.1.0
+        uses: actions/setup-node@v6.3.0
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: 22
+          cache: npm
 
       - name: Remove Tag Prefix
         run: npm config set tag-version-prefix ""
@@ -55,14 +39,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run tests
+        run: npm test
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Format code
+        run: npm run format:check
+
+      - name: Build Project
+        run: npm run build
+
       - name: Get Version
         id: get_version
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Build Project
-        run: npm run build
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       #- name: Publish to npm
       #  env:
@@ -70,21 +63,22 @@ jobs:
       #  run: npm publish
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2.1.0
+        uses: softprops/action-gh-release@v2.6.1
         with:
-          tag_name: "${{ env.VERSION }}"
-          name: "${{ env.VERSION }}"
+          tag_name: "${{ steps.get_version.outputs.version }}"
+          name: "${{ steps.get_version.outputs.version }}"
+          target_commitish: master
           body: |
-            Automated release of version ${{ env.VERSION }}.
+            Automated release of version ${{ steps.get_version.outputs.version }}.
           files: |
             manifest.json
             main.js
             styles.css
 
       - name: Upload Plugin Files
-        uses: actions/upload-artifact@v4.4.3
+        uses: actions/upload-artifact@v7.0.0
         with:
-          name: insta-toc-${{ env.VERSION }}
+          name: insta-toc-${{ steps.get_version.outputs.version }}
           path: |
             manifest.json
             main.js

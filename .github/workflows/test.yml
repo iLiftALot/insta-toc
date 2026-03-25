@@ -5,43 +5,43 @@ on:
     branches:
       - master
     types:
-      - closed
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
-    if: |
-      github.event_name == 'workflow_dispatch' || (
-        github.event_name == 'pull_request' &&
-        github.event.pull_request.merged == true &&
-        github.event.pull_request.base.ref == 'master'
-      )
+  test:
     runs-on: ubuntu-latest
-    timeout-minutes: 1
-    
-    strategy:
-      matrix:
-        node-version: [22]
-    
+    timeout-minutes: 10
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6.0.2
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4.1.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.3.0
         with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Cache node_modules
-        id: cache-node-modules
-        uses: actions/cache@v4.1.2
-        with:
-          key: ${{ runner.os }}-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
-          path: node_modules
+          node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci
 
       - name: Run tests
-        run: npm run test
+        run: npm test
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run build
+        run: npm run build

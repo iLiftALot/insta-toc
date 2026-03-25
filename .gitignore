@@ -121,6 +121,7 @@ dist
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode/bookmarks.json
+.vscode/extensions.json
 .vscode/notes.*
 .vscode-test
 
@@ -139,3 +140,22 @@ data.json
 
 # main.js
 main.js
+
+/.github/agents/
+/.github/skills/
+/help
+
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+test/_test.ts
+test/_test.test.ts
+test/_test.test.svelte.ts
+
+CLAUDE.md
+.claude/
+.github/prompts/
+.github/copilot-instructions.md
+InstaToc Obsidian Plugin/

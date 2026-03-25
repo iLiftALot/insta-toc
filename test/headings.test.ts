@@ -1,26 +1,34 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import {
-    testStandardHeadings,
-    testHandleLinks,
-    testHeadingsWithoutFirstLevel,
-    testHeadingsMixed,
-    testHeadingsWithSpecialChars,
-    testOmitHeadingRegex,
-    TestNames,
-    TestName,
-    Context,
-    initialStandardHeadings,
-    initialHeadingsWithSpecialChars,
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test
+} from "vitest";
+import {
+    type Context,
+    initialHeadingsMixed,
     initialHeadingsWithoutFirstLevel,
-    initialHeadingsMixed
-} from "./testingObjects";
+    initialHeadingsWithSpecialChars,
+    initialStandardHeadings,
+    testHandleLinks,
+    testHeadingsMixed,
+    testHeadingsWithoutFirstLevel,
+    testHeadingsWithSpecialChars,
+    type TestName,
+    TestNames,
+    testOmitHeadingRegex,
+    testStandardHeadings
+} from "./mocks/testingObjects";
 
-
-function testGetIndentationLevel(headingLevel: number, headingLevelStack: number[]) {
-    // Pop from the stack until we find a heading level less than the current 
+function testGetIndentationLevel(
+    headingLevel: number,
+    headingLevelStack: number[]
+): { currentIndentLevel: number; headingLevelStack: number[]; } {
+    // Pop from the stack until we find a heading level less than the current
     while (
-        headingLevelStack.length > 0 && // Avoid indentation for the first heading
-        headingLevel <= headingLevelStack[headingLevelStack.length - 1]
+        headingLevelStack.length > 0 // Avoid indentation for the first heading
+        && headingLevel <= headingLevelStack[headingLevelStack.length - 1]
     ) {
         headingLevelStack.pop();
     }
@@ -31,65 +39,73 @@ function testGetIndentationLevel(headingLevel: number, headingLevelStack: number
     return { currentIndentLevel, headingLevelStack };
 }
 
-describe('Headings', () => {
+describe("Headings", () => {
     let iteration = 0;
     let testId: TestName;
     const contextObject: Context = {
-        "testStandardHeadings": {
-            "initialHeadings": initialStandardHeadings,
-            "formattedHeadings": [],
-            "finalResult": ""
+        testStandardHeadings: {
+            initialHeadings: initialStandardHeadings,
+            formattedHeadings: [],
+            finalResult: ""
         },
-        "testHeadingsWithoutFirstLevel": {
-            "initialHeadings": initialHeadingsWithoutFirstLevel,
-            "formattedHeadings": [],
-            "finalResult": ""
+        testHeadingsWithoutFirstLevel: {
+            initialHeadings: initialHeadingsWithoutFirstLevel,
+            formattedHeadings: [],
+            finalResult: ""
         },
-        "testHeadingsMixed": {
-            "initialHeadings": initialHeadingsMixed,
-            "formattedHeadings": [],
-            "finalResult": ""
+        testHeadingsMixed: {
+            initialHeadings: initialHeadingsMixed,
+            formattedHeadings: [],
+            finalResult: ""
         },
-        "testHeadingsWithSpecialChars": {
-            "initialHeadings": initialHeadingsWithSpecialChars,
-            "formattedHeadings": [],
-            "finalResult": ""
+        testHeadingsWithSpecialChars: {
+            initialHeadings: initialHeadingsWithSpecialChars,
+            formattedHeadings: [],
+            finalResult: ""
         }
-    }
+    };
 
     beforeEach(() => {
-        testId = TestNames[iteration] as TestName;
-        console.log(`${'#'.repeat(10)}\n${testId}\n${'#'.repeat(10)}\n${contextObject[testId].initialHeadings.join('\n')}`);
+        testId = (Object.keys(TestNames) as TestName[])[iteration];
+        console.log(
+            `${"#".repeat(10)}\n${testId}\n${"#".repeat(10)}\n${contextObject[testId].initialHeadings.join("\n")}`
+        );
     });
 
     afterEach(() => {
-        const finalResultArray = contextObject[testId].finalResult.split('\n')
+        const finalResultArray = contextObject[testId].finalResult
+            .split("\n")
             .reduce<[string, string | undefined][]>((acc, item, index) => {
                 acc.push([contextObject[testId].initialHeadings[index], item]);
                 return acc;
             }, [])
             .flatMap(([val1, val2]) => `\n${val1}\n⬇️ ⬇️ ⬇️\n${val2}\n`); // Explicitly define the initial value type as an array of tuples
 
-        console.log(`\nFINAL RESULT:\n${finalResultArray}\n\n${'='.repeat(100)}\n${'='.repeat(100)}\n${'='.repeat(100)}\n\n`);
+        console.log(
+            `\nFINAL RESULT:\n${finalResultArray}\n\n${"=".repeat(100)}\n${"=".repeat(100)}\n${"=".repeat(100)}\n\n`
+        );
         iteration += 1;
     });
 
-    test('Returns indented list with links', () => {
+    test("Returns indented list with links", () => {
         const md = (() => {
             let testHeadingLevelStack: number[] = [];
             const testHeadings: string[] = [];
-            
+
             testStandardHeadings.forEach((test) => {
-                const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(test.level, testHeadingLevelStack);
+                const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(
+                    test.level,
+                    testHeadingLevelStack
+                );
                 testHeadingLevelStack = headingLevelStack;
-                
-                const heading = testHandleLinks('testStandardHeadings', test.heading, currentIndentLevel);
+
+                const heading = testHandleLinks("testStandardHeadings", test.heading, currentIndentLevel);
                 testHeadings.push(heading);
-                
+
                 contextObject[testId].formattedHeadings.push(heading);
             });
 
-            return testHeadings.join('\n');
+            return testHeadings.join("\n");
         })();
 
         const expectedMd = `
@@ -105,24 +121,27 @@ describe('Headings', () => {
         expect(md).toEqual(expectedMd);
     });
 
-    test('Returns indented list with links if no first level', () => {
+    test("Returns indented list with links if no first level", () => {
         const md = (() => {
             let testHeadingLevelStack: number[] = [];
             const testHeadings: string[] = [];
 
             testHeadingsWithoutFirstLevel.forEach((test) => {
-                const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(test.level, testHeadingLevelStack);
+                const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(
+                    test.level,
+                    testHeadingLevelStack
+                );
                 testHeadingLevelStack = headingLevelStack;
 
-                const heading = testHandleLinks('testHeadingsWithoutFirstLevel', test.heading, currentIndentLevel);
+                const heading = testHandleLinks("testHeadingsWithoutFirstLevel", test.heading, currentIndentLevel);
                 testHeadings.push(heading);
 
                 contextObject[testId].formattedHeadings.push(heading);
             });
 
-            return testHeadings.join('\n');
+            return testHeadings.join("\n");
         })();
-        
+
         const expectedMd = `
 - [[testHeadingsWithoutFirstLevel#Title 1 Level 2|Title 1 Level 2]]
     - [[testHeadingsWithoutFirstLevel#Title 1 Level 3|Title 1 Level 3]]
@@ -134,22 +153,25 @@ describe('Headings', () => {
         expect(md).toEqual(expectedMd);
     });
 
-    test('Returns indented list from disorderly headings', () => {
+    test("Returns indented list from disorderly headings", () => {
         const md = (() => {
             let testHeadingLevelStack: number[] = [];
             const testHeadings: string[] = [];
 
             testHeadingsMixed.forEach((test) => {
-                const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(test.level, testHeadingLevelStack);
+                const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(
+                    test.level,
+                    testHeadingLevelStack
+                );
                 testHeadingLevelStack = headingLevelStack;
 
-                const heading = testHandleLinks('testHeadingsMixed', test.heading, currentIndentLevel);
+                const heading = testHandleLinks("testHeadingsMixed", test.heading, currentIndentLevel);
                 testHeadings.push(heading);
-                
+
                 contextObject[testId].formattedHeadings.push(heading);
             });
 
-            return testHeadings.join('\n');
+            return testHeadings.join("\n");
         })();
 
         const expectedMd = `
@@ -165,25 +187,27 @@ describe('Headings', () => {
         expect(md).toEqual(expectedMd);
     });
 
-
-    test('Returns indented list with sanitized links from special chars and HTML', () => {
+    test("Returns indented list with sanitized links from special chars and HTML", () => {
         const md = (() => {
             let testHeadingLevelStack: number[] = [];
             const testHeadings: string[] = [];
 
             testHeadingsWithSpecialChars.forEach((test) => {
                 if (!test.heading.match(testOmitHeadingRegex)) {
-                    const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(test.level, testHeadingLevelStack);
+                    const { currentIndentLevel, headingLevelStack } = testGetIndentationLevel(
+                        test.level,
+                        testHeadingLevelStack
+                    );
                     testHeadingLevelStack = headingLevelStack;
 
-                    const heading = testHandleLinks('testHeadingsWithSpecialChars', test.heading, currentIndentLevel);
+                    const heading = testHandleLinks("testHeadingsWithSpecialChars", test.heading, currentIndentLevel);
                     testHeadings.push(heading);
 
                     contextObject[testId].formattedHeadings.push(heading);
                 }
             });
 
-            return testHeadings.join('\n');
+            return testHeadings.join("\n");
         })();
 
         const expectedMd = `
